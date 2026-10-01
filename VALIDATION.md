@@ -20,4 +20,4 @@ Validated on **2026-10-01** with a fresh clone on a GitHub-hosted Windows runner
 
 The workflow's `windows-inference-reports` artifact contains the full JSON outputs and installed runtime versions. These are functional smoke tests, not an accuracy benchmark. Timings describe the CI runner only.
 
-The tested model/script commit was `7e7f89a`; subsequent documentation changes do not alter weights or test code. Upstream model revision: `55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851`.
+The tested model/script commit was `7e7f89a`. The installer has since been simplified to install the same pinned runtime through your configured pip package index, without overriding it with a PyTorch download URL. Model weights, restoration, and inference checks are unchanged. Upstream model revision: `55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851`.

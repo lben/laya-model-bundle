@@ -26,7 +26,7 @@ cd laya-model-bundle
 powershell -ExecutionPolicy Bypass -File .\test_windows.ps1 -Install
 ```
 
-This creates `.venv`, installs the pinned CPU runtime, restores all three models, verifies every file, and runs real **offline** inference for `choice`, `score`, and `noul`. The multilingual model is also tested on Spanish text. It prints `PASS` and writes JSON results to `reports/`. Package installation requires internet access; restoration and inference do not.
+This creates `.venv`, installs the pinned runtime dependencies, restores all three models, verifies every file, and runs real **offline** inference for `choice`, `score`, and `noul`. Installation uses a normal `pip install -r requirements.txt`, including PyTorch, and respects your existing `pip.ini` and configured package index (such as company Artifactory). It does not override the package source or upgrade pip. The multilingual model is also tested on Spanish text. It prints `PASS` and writes JSON results to `reports/`. Installation needs access to your configured package registry; restoration and inference do not.
 
 After the first installation:
 
@@ -40,7 +40,7 @@ For just the English model:
 powershell -ExecutionPolicy Bypass -File .\test_windows.ps1 -Install -Model english
 ```
 
-For NVIDIA CUDA instead, use `-Install -Device cuda`. This installs the PyTorch CUDA 12.8 wheel; a compatible NVIDIA driver is required. CPU is the configuration validated by the repository's Windows CI.
+For NVIDIA CUDA instead, use `-Device cuda` with a CUDA-enabled PyTorch build and a compatible NVIDIA driver. The device option selects where inference runs; it does not change your pip package source. CPU is the configuration validated by the repository's Windows CI.
 
 ## Restore without installing any ML packages
 

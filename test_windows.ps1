@@ -12,15 +12,7 @@ try {
     }
     $Python = Join-Path $PSScriptRoot '.venv\Scripts\python.exe'
     if ($Install) {
-        & $Python -m pip install --upgrade pip
-        if ($LASTEXITCODE -ne 0) { throw 'pip upgrade failed' }
-        if ($Device -eq 'cpu') {
-            & $Python -m pip install torch==2.8.0 --index-url https://download.pytorch.org/whl/cpu
-            if ($LASTEXITCODE -ne 0) { throw 'CPU PyTorch installation failed' }
-        } else {
-            & $Python -m pip install torch==2.8.0 --index-url https://download.pytorch.org/whl/cu128
-            if ($LASTEXITCODE -ne 0) { throw 'CUDA PyTorch installation failed' }
-        }
+        # Use the user's existing pip configuration, including company Artifactory.
         & $Python -m pip install -r requirements.txt
         if ($LASTEXITCODE -ne 0) { throw 'Runtime dependency installation failed' }
         & $Python -m pip check
