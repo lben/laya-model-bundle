@@ -56,7 +56,32 @@ py -3.12 restore.py --verify-only           # verify restored original files
 
 Restoration streams across chunk boundaries, verifies hashes, and publishes each completed model directory atomically. It does not create a temporary full compressed archive. Each checkpoint resumes independently: rerunning skips an existing directory only if all its files match. Missing/corrupt chunks or changed restored files produce an error and a nonzero exit code. Changed model directories are preserved; rename them before restoring a fresh copy. Keep the chunks if you want to restore again.
 
-## Use the restored model
+## Offline interactive mode and prompts
+
+From the repository folder, start the local interactive launcher:
+
+```powershell
+.\laya-local.cmd --preset triage
+```
+
+Enter text at `laya>` and type `quit` or `exit` to finish. The model is loaded once and reused for every entry. Available presets are `triage`, `email`, `guard`, `moderation`, and `router`. These return typed decisions and probabilities about your text.
+
+For a single prompt, JSON output, another checkpoint, or a custom restoration destination:
+
+```powershell
+.\laya-local.cmd "I was charged twice. Please refund me." --preset triage --json
+.\laya-local.cmd --preset moderation
+.\laya-local.cmd --preset triage --model multilingual
+.\laya-local.cmd --preset triage --models-dir D:\LayaModels
+```
+
+This launcher uses your existing `.venv` and defaults to the restored English checkpoint at `models/laya` on CPU. Select `--model multilingual` or `--model typed-decisions` for the other local directories, or `--device cuda` for a CUDA-enabled runtime. It verifies the restored files, loads the model by its absolute local path, enables Hugging Face offline mode, and blocks socket connections during loading and inference. If a model is missing, it tells you to restore it locally. It does not download model files.
+
+Use **`laya-local.cmd`** for this repository. The package's separate `.venv\Scripts\laya.exe` CLI defaults to Hub model IDs and does not automatically use these restored folders.
+
+The cross-platform equivalent is `python laya_local.py --preset triage` using your environment's Python.
+
+## Use the restored model from Python
 
 Use the **Laya SDK**, which understands the decision head and typed questions:
 
@@ -87,7 +112,7 @@ Replace the path with `models/laya-multilingual` or `models/laya-typed-decisions
 
 All three checkpoints passed restoration and real offline CPU inference on Windows on 2026-10-01. See [VALIDATION.md](VALIDATION.md) for the successful run, runtime versions, and reports.
 
-- `python -m unittest discover -s tests -v` tests stream reconstruction, empty files, many chunk boundaries, corruption, missing chunks, original checksum failures, decompression size limits, safe paths, and preservation of changed files. CI runs these on Windows and Linux.
+- `python -m unittest discover -s tests -v` tests stream reconstruction, empty files, many chunk boundaries, corruption, missing chunks, original checksum failures, decompression size limits, safe paths, and preservation of changed files. It also tests local CLI preset selection, absolute checkpoint paths, network blocking, interactive model reuse, and rejection of missing/changed checkpoints. CI runs these on Windows and Linux.
 - The manually triggered **Windows restore and offline inference** workflow checks the published real weights, all restored SHA-256 hashes, and actual offline CPU inference on each checkpoint. Reports are saved as a workflow artifact.
 - Maintainers can package a clean new bundle with `python scripts/pack_models.py --model english`, then `multilingual`, then `typed-decisions`. It streams the pinned upstream snapshot and validates Git blob/LFS digests before accepting each file. `--git-index` saves local disk space by storing chunks in Git's index and deleting working copies; it is intended for publishing from a staging checkout.
 - Each chunk is below GitHub's [100 MB enforced per-object limit](https://docs.github.com/en/repositories/creating-and-managing-repositories/repository-limits). Upload model commits separately to stay below the 2 GB push limit. Avoid repeatedly committing replacement weight bundles, since binary history increases clone size.
