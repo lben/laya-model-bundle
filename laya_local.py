@@ -29,6 +29,32 @@ BUCKET_REQUEST = re.compile(
 )
 
 
+def bucket_questions(pieces):
+    """Validate category names/descriptions and build an SDK choice question."""
+    criteria, seen = {}, set()
+    for piece in pieces:
+        piece = piece.strip()
+        if not piece:
+            raise ValueError('Each option needs a name; empty options are not allowed.')
+        pair = re.split(r'\s*[=:]\s*', piece, maxsplit=1)
+        label = pair[0].strip()
+        description = pair[1].strip() if len(pair) == 2 else label
+        if not label or not description:
+            raise ValueError('Use a name or a label with a description, such as A=billing.')
+        if label.casefold() in seen:
+            raise ValueError(f'Duplicate option: {label}')
+        seen.add(label.casefold())
+        criteria[label] = description
+    if len(criteria) < 2:
+        raise ValueError('Provide at least two options.')
+    return {'bucket': {'type': 'choice', 'instructions': 'Which option best categorizes `message`?', 'criteria': criteria}}
+
+
+def parse_options(options):
+    """Parse the flag's comma-separated list, preserving multiword option names."""
+    return bucket_questions(options.split(','))
+
+
 def parse_bucket_request(text):
     """Convert the supported plain-text instruction into an SDK choice question."""
     text = text.strip()
@@ -43,25 +69,10 @@ def parse_bucket_request(text):
     # Explicit |/semicolon separators and label descriptions preserve their own wording.
     if ',' in options and not re.search(r'[;|]', options) and not re.search(r'[=:]', pieces[-1]):
         pieces[-1:] = re.split(r'\s+and\s+', pieces[-1].strip(), flags=re.IGNORECASE)
-    criteria, seen = {}, set()
-    for piece in pieces:
-        piece = piece.strip()
-        if piece.lower() == 'and':
-            continue
-        piece = re.sub(r'^and\s+', '', piece, flags=re.IGNORECASE)
-        if not piece:
-            raise ValueError('Each option needs a name. Separate options with commas, semicolons, or |.')
-        pair = re.split(r'\s*[=:]\s*', piece, maxsplit=1)
-        label = pair[0].strip()
-        description = pair[1].strip() if len(pair) == 2 else label
-        if not label or not description:
-            raise ValueError('Use a name or a label with a description, such as A=billing.')
-        if label.casefold() in seen:
-            raise ValueError(f'Duplicate option: {label}')
-        seen.add(label.casefold())
-        criteria[label] = description
-    if len(criteria) < 2:
-        raise ValueError('Provide at least two options.')
+    questions = bucket_questions([
+        re.sub(r'^and\s+', '', piece.strip(), flags=re.IGNORECASE)
+        for piece in pieces if piece.strip().lower() != 'and'
+    ])
     message = match['message'].strip()
     for opening, closing in [('"', '"'), ("'", "'"), ('“', '”'), ('‘', '’')]:
         if len(message) >= 2 and message.startswith(opening) and message.endswith(closing):
@@ -69,7 +80,6 @@ def parse_bucket_request(text):
             break
     if not message:
         raise ValueError('The message to categorize is empty.')
-    questions = {'bucket': {'type': 'choice', 'instructions': 'Which option best categorizes `message`?', 'criteria': criteria}}
     return message, questions
 
 
@@ -136,19 +146,27 @@ def show_result(result, as_json, all_probabilities=False):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('text', nargs='*', help='text to classify; omit for interactive mode')
-    parser.add_argument('--preset', choices=list(PRESETS), default='triage')
+    classification = parser.add_mutually_exclusive_group()
+    classification.add_argument('--preset', choices=list(PRESETS), help='preset to use (default: triage)')
+    classification.add_argument('--options', help='comma-separated category names, optionally label=description; omit text for interactive mode')
     parser.add_argument('--model', choices=['english', 'multilingual', 'typed-decisions'], default='english')
     parser.add_argument('--models-dir', type=Path, default=ROOT / 'models')
     parser.add_argument('--device', choices=['cpu', 'cuda'], default='cpu')
     parser.add_argument('--json', action='store_true', help='print complete structured results')
     args = parser.parse_args(argv)
+    args.preset = args.preset or 'triage'
     try:
+        fixed_questions = parse_options(args.options) if args.options is not None else None
         with offline_mode():
             agent, directory = load_agent(args)
-            function, state_key = PRESETS[args.preset]
-            questions = getattr(importlib.import_module('laya.presets'), function)()
+            if fixed_questions is None:
+                function, state_key = PRESETS[args.preset]
+                questions = getattr(importlib.import_module('laya.presets'), function)()
 
             def predict(text):
+                if fixed_questions is not None:
+                    show_result(agent.predict({'message': text}, fixed_questions), args.json, all_probabilities=True)
+                    return
                 custom = parse_bucket_request(text)
                 if custom is not None:
                     message, bucket_questions = custom
@@ -160,9 +178,11 @@ def main(argv=None):
             if text:
                 predict(text)
             else:
-                print(f'Local model: {directory}\nPreset: {args.preset}; device: {args.device}')
+                mode = f'Options: {", ".join(fixed_questions["bucket"]["criteria"])}' if fixed_questions is not None else f'Preset: {args.preset}'
+                print(f'Local model: {directory}\n{mode}; device: {args.device}')
                 print('Enter text to classify. Type quit or exit to finish.')
-                print('Custom buckets: From the following options A, B, C and D categorize the following message on each one: "message"')
+                if fixed_questions is None:
+                    print('Custom buckets: From the following options A, B, C and D categorize the following message on each one: "message"')
                 while True:
                     try:
                         text = input('laya> ').strip()

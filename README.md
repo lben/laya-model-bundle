@@ -81,6 +81,25 @@ Use **`laya-local.cmd`** for this repository. The package's separate `.venv\Scri
 
 The cross-platform equivalent is `python laya_local.py --preset triage` using your environment's Python.
 
+### Custom buckets with `--options`
+
+Put the message first, then a comma-separated list of categories. No message flag or JSON input is needed:
+
+```powershell
+.\laya-local.cmd "I was charged twice. Please refund me." --options "billing,technical,sales,other"
+.\laya-local.cmd "I was charged twice." --options "A=billing,B=technical support,C=sales,D=other" --json
+```
+
+The command prints the winning category and a probability for every option. Probabilities sum to approximately 1. Surround the list with quotes, especially for names containing spaces. Spaces around commas are ignored; provide at least two distinct, nonempty options. Optional `label=description` or `label:description` entries give short labels a meaning. Commas separate entries, so names/descriptions must not contain commas.
+
+Omit the message for interactive mode with the same options on every entry:
+
+```powershell
+.\laya-local.cmd --options "billing,technical support,sales,other"
+```
+
+Use either `--options` or `--preset`. With `--options`, the message is passed directly to the classifier, including any instruction-like wording it contains. The existing local checkpoint, device, and JSON flags also work.
+
 ### Custom buckets in plain text
 
 No JSON file is needed. At `laya>`, enter this supported sentence format:

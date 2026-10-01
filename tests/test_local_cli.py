@@ -142,6 +142,56 @@ class LocalCliTests(unittest.TestCase):
         self.agent.predict.assert_not_called()
         self.assertIn('message to categorize is empty', self.stderr.getvalue())
 
+    def test_message_first_with_options_prints_every_probability(self):
+        self.agent.predict.return_value = {'answers': {'bucket': {'choice': 'billing', 'probabilities': {'billing': 0.8, 'technical support': 0.2}}}}
+        self.assertEqual(self.run_cli('I was charged twice.', '--options', ' billing , technical support '), 0)
+        state, questions = self.agent.predict.call_args.args
+        self.assertEqual(state, {'message': 'I was charged twice.'})
+        self.assertEqual(questions['bucket']['criteria'], {'billing': 'billing', 'technical support': 'technical support'})
+        self.assertIn('billing: 0.8000', self.stdout.getvalue())
+        self.assertIn('technical support: 0.2000', self.stdout.getvalue())
+        self.presets.triage_questions.assert_not_called()
+
+    def test_options_json_and_literal_message(self):
+        message = 'From the following options this is the literal message'
+        self.assertEqual(self.run_cli(message, '--options', 'A=billing,B=technical support', '--json'), 0)
+        self.assertEqual(self.agent.predict.call_args.args[0], {'message': message})
+        self.assertEqual(self.agent.predict.call_args.args[1]['bucket']['criteria'], {'A': 'billing', 'B': 'technical support'})
+        self.assertEqual(json.loads(self.stdout.getvalue()), self.agent.predict.return_value)
+
+    def test_interactive_options_reuse_categories_and_model(self):
+        with patch('builtins.input', side_effect=['First message', 'Second message', 'quit']):
+            self.assertEqual(self.run_cli('--options', 'billing,other'), 0)
+        self.assertEqual(self.laya.load.call_count, 1)
+        self.assertEqual(self.agent.predict.call_count, 2)
+        for call in self.agent.predict.call_args_list:
+            self.assertEqual(call.args[1]['bucket']['criteria'], {'billing': 'billing', 'other': 'other'})
+        self.assertIn('Options: billing, other', self.stdout.getvalue())
+        self.presets.triage_questions.assert_not_called()
+
+    def test_invalid_options_fail_before_loading_model(self):
+        for options in ['', 'billing', ',other', 'billing,', 'billing,,other', 'billing,BILLING', 'A=,B=other', '=billing,B=other']:
+            with self.subTest(options=options):
+                self.assertEqual(self.run_cli('My message', '--options', options), 1)
+        self.laya.load.assert_not_called()
+        self.agent.predict.assert_not_called()
+
+    def test_options_and_preset_are_mutually_exclusive(self):
+        with self.assertRaises(SystemExit) as raised:
+            self.run_cli('My message', '--options', 'billing,other', '--preset', 'triage')
+        self.assertEqual(raised.exception.code, 2)
+        self.laya.load.assert_not_called()
+
+
+class OptionsFlagTests(unittest.TestCase):
+    def test_comma_list_preserves_multiword_names_and_and(self):
+        questions = laya_local.parse_options(' customer support , research and development , and , and more ')
+        self.assertEqual(list(questions['bucket']['criteria']), ['customer support', 'research and development', 'and', 'and more'])
+
+    def test_labels_and_descriptions(self):
+        questions = laya_local.parse_options(' A = billing and refunds , B: technical support ')
+        self.assertEqual(questions['bucket']['criteria'], {'A': 'billing and refunds', 'B': 'technical support'})
+
 
 class PlainTextBucketTests(unittest.TestCase):
     def parse(self, options, message='“I was charged twice.”'):
