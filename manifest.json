@@ -590,6 +590,158 @@
           "source_path": "multilingual/tokenizer/tokenizer_config.json"
         }
       ]
+    },
+    {
+      "name": "typed-decisions",
+      "directory": "laya-typed-decisions",
+      "source_subfolder": "typed-decisions",
+      "files": [
+        {
+          "size": 2084,
+          "sha256": "5268d24ad3b77c8151de5dcb0762ba4391619aad9ab0bda33e36fb083cfeae6d",
+          "parts": [
+            {
+              "path": "chunks/typed-decisions/file000.gz.part0000",
+              "size": 604,
+              "sha256": "0d2071fe8855982692f0bdf4191c134f378461f58a1ba836ddf6b718af9a3d02"
+            }
+          ],
+          "path": "encoder/config.json",
+          "source_path": "typed-decisions/encoder/config.json"
+        },
+        {
+          "size": 842609220,
+          "sha256": "4fa56de72383a9d3efa9cfa78955733c81b9fc8067a587ca4beb82c78107a24e",
+          "parts": [
+            {
+              "path": "chunks/typed-decisions/file001.gz.part0000",
+              "size": 47185920,
+              "sha256": "0dd2969b2356c8baef5a0e83fdf3ae37889ff07d21ddaee3cc547f87f6cffcb4"
+            },
+            {
+              "path": "chunks/typed-decisions/file001.gz.part0001",
+              "size": 47185920,
+              "sha256": "43756e57a024cd71a7f195bc309025b81c65cea933413f5727942bb316e63fdd"
+            },
+            {
+              "path": "chunks/typed-decisions/file001.gz.part0002",
+              "size": 47185920,
+              "sha256": "1ac51a9dda88982b2003dd971231db4bfa0b43af305015e143f1bb1043f97f64"
+            },
+            {
+              "path": "chunks/typed-decisions/file001.gz.part0003",
+              "size": 47185920,
+              "sha256": "0648c25b2813c66a33e2090d2e9bb5b773e1b2ea3a28b0b8dd4021aa56d0bfd4"
+            },
+            {
+              "path": "chunks/typed-decisions/file001.gz.part0004",
+              "size": 47185920,
+              "sha256": "559a95dd2b9a4c1195dcc25001086faa6210d96df7471ed926bf2a1f93c83a0b"
+            },
+            {
+              "path": "chunks/typed-decisions/file001.gz.part0005",
+              "size": 47185920,
+              "sha256": "c3eb29ea47af516861a0164a8fe1711c6defd5b3923f7f1906716c721f6e528e"
+            },
+            {
+              "path": "chunks/typed-decisions/file001.gz.part0006",
+              "size": 47185920,
+              "sha256": "2327f5586015c6e4528e0d4f4e472a74175d3a85eb6bd1a27fdd899fbe60bf46"
+            },
+            {
+              "path": "chunks/typed-decisions/file001.gz.part0007",
+              "size": 47185920,
+              "sha256": "dfe55f3fbca3110fa6593afc979c2e26c90edda72fe6ade85c881d513d68fb5b"
+            },
+            {
+              "path": "chunks/typed-decisions/file001.gz.part0008",
+              "size": 47185920,
+              "sha256": "d50a8531f7c521abdb3b29e98d8a8eef0b919af2c0386d75d94bd9a3e0bb8d05"
+            },
+            {
+              "path": "chunks/typed-decisions/file001.gz.part0009",
+              "size": 47185920,
+              "sha256": "10bdf448f1eab1acc880b3226f7bb9237f512ecb355cc4b2159c51edb4aacf4b"
+            },
+            {
+              "path": "chunks/typed-decisions/file001.gz.part0010",
+              "size": 47185920,
+              "sha256": "e9b4666019d50d6f39d980d9d73dcb912dcb3c3f2764111ce99537f918f19036"
+            },
+            {
+              "path": "chunks/typed-decisions/file001.gz.part0011",
+              "size": 47185920,
+              "sha256": "2b207f6570bb485f6a73708cbb4b0c6cbb6e4969496cdc8d020989cb08316659"
+            },
+            {
+              "path": "chunks/typed-decisions/file001.gz.part0012",
+              "size": 47185920,
+              "sha256": "afa2a03c2a3a7c57218d11d42373ed5a0ec1e162554a64a9ffa3db0cd2683da6"
+            },
+            {
+              "path": "chunks/typed-decisions/file001.gz.part0013",
+              "size": 47185920,
+              "sha256": "03e5964a0b16728990f8c0498d02e73a8f3f1921be6cfc214e23e9adcbee7c20"
+            },
+            {
+              "path": "chunks/typed-decisions/file001.gz.part0014",
+              "size": 47185920,
+              "sha256": "57f4ecaa9a5890e6cc77b9cc1326626ffd842c556b9ee7119c95d98ee3c3bfd2"
+            },
+            {
+              "path": "chunks/typed-decisions/file001.gz.part0015",
+              "size": 47185920,
+              "sha256": "cbad93a45cee3bc1e370ac0ff5b9a1ff68652043c72f18c0beae865d233a67bc"
+            },
+            {
+              "path": "chunks/typed-decisions/file001.gz.part0016",
+              "size": 22790933,
+              "sha256": "5d0a14baae865341cbcc1dbee094057c21586e75830f914d6ac37c6b3819b59e"
+            }
+          ],
+          "path": "model.safetensors",
+          "source_path": "typed-decisions/model.safetensors"
+        },
+        {
+          "size": 847,
+          "sha256": "ebf0cd524d92342a6be5e48e9fca3d7c2babfb5a56ccd79d2171ef5d8c7f7be8",
+          "parts": [
+            {
+              "path": "chunks/typed-decisions/file002.gz.part0000",
+              "size": 476,
+              "sha256": "006361d6b3baf10b62fd6f40021a74a8c8f595395c6b19a54b17e3531574ad51"
+            }
+          ],
+          "path": "rl_agent_config.json",
+          "source_path": "typed-decisions/rl_agent_config.json"
+        },
+        {
+          "size": 3583228,
+          "sha256": "6c8aaa9a542084f2457eab775d4eeb51f92a70c0fd9de28d5edb0ddec3c08d30",
+          "parts": [
+            {
+              "path": "chunks/typed-decisions/file003.gz.part0000",
+              "size": 659990,
+              "sha256": "3596c221af2a89e661325b4dcaffe6a04bdd4938155cb607996d53dc6b601937"
+            }
+          ],
+          "path": "tokenizer/tokenizer.json",
+          "source_path": "typed-decisions/tokenizer/tokenizer.json"
+        },
+        {
+          "size": 337,
+          "sha256": "08d4cf3ac4dca381759441b85b91a6d40e688471dcd33d15d6649eb0a9a854d1",
+          "parts": [
+            {
+              "path": "chunks/typed-decisions/file004.gz.part0000",
+              "size": 218,
+              "sha256": "a15bcffc7fe68a0649d1f3dcf6a8f440c366bdaf61fed0fc33f2770a5af2c1b2"
+            }
+          ],
+          "path": "tokenizer/tokenizer_config.json",
+          "source_path": "typed-decisions/tokenizer/tokenizer_config.json"
+        }
+      ]
     }
   ]
 }
