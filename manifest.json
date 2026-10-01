@@ -458,6 +458,138 @@
           "source_path": "tokenizer/tokenizer_config.json"
         }
       ]
+    },
+    {
+      "name": "multilingual",
+      "directory": "laya-multilingual",
+      "source_subfolder": "multilingual",
+      "files": [
+        {
+          "size": 1938,
+          "sha256": "83f6916d13ef0f556ac461f28308dc2bffa7ebeadee8ec9e2db5812020ea5bb4",
+          "parts": [
+            {
+              "path": "chunks/multilingual/file000.gz.part0000",
+              "size": 601,
+              "sha256": "d89bad8ef1f734218b5b6ec71e6a10d3fd0130e52fa7bfd26f2939130e8fca8d"
+            }
+          ],
+          "path": "encoder/config.json",
+          "source_path": "multilingual/encoder/config.json"
+        },
+        {
+          "size": 643835514,
+          "sha256": "9d628fd971b700382ac6f65920a86f149777b2e748e0c955fb3b19695aa8f204",
+          "parts": [
+            {
+              "path": "chunks/multilingual/file001.gz.part0000",
+              "size": 47185920,
+              "sha256": "63babcd93232d42cf66647291cbcf101308b2263af2beab51dfeb6ff96399433"
+            },
+            {
+              "path": "chunks/multilingual/file001.gz.part0001",
+              "size": 47185920,
+              "sha256": "1c18fa44628d0043d1f2fc075475ed83c4db8ba2ed32537d9ddf914de3e6df97"
+            },
+            {
+              "path": "chunks/multilingual/file001.gz.part0002",
+              "size": 47185920,
+              "sha256": "d8f4d8b5d2e5feaf6891efb036799865de33ebf1815f99f385922b18dc319040"
+            },
+            {
+              "path": "chunks/multilingual/file001.gz.part0003",
+              "size": 47185920,
+              "sha256": "32acf9ff73eacb0b5cf251c4af122606c58d069fc3b3b420c4841b73308128cc"
+            },
+            {
+              "path": "chunks/multilingual/file001.gz.part0004",
+              "size": 47185920,
+              "sha256": "65bfc0d02e25fced36da64cbe64cf39cbab84a5174f78493e96bd39889f67cec"
+            },
+            {
+              "path": "chunks/multilingual/file001.gz.part0005",
+              "size": 47185920,
+              "sha256": "0f47afcee87e8ef57378c66e9badf130626bc01ae139a4ff42d97c0437fb244a"
+            },
+            {
+              "path": "chunks/multilingual/file001.gz.part0006",
+              "size": 47185920,
+              "sha256": "ac6417e3de56d730c716de806b6d63b10dbd56627d72ef6d3de4d68ee47b75ec"
+            },
+            {
+              "path": "chunks/multilingual/file001.gz.part0007",
+              "size": 47185920,
+              "sha256": "68930129cdeb2dc7b73212e3b0c0355e39d2748b2f1a00eeae00ff8d39a82981"
+            },
+            {
+              "path": "chunks/multilingual/file001.gz.part0008",
+              "size": 47185920,
+              "sha256": "1d2a50b56aeae1c1f439f897ba16945bb1c673ec4c336dd40b5b7c0c5769feee"
+            },
+            {
+              "path": "chunks/multilingual/file001.gz.part0009",
+              "size": 47185920,
+              "sha256": "f87ed51038258e8876b46f740451085fd82fce151998177240fb062b6f4dba21"
+            },
+            {
+              "path": "chunks/multilingual/file001.gz.part0010",
+              "size": 47185920,
+              "sha256": "5eb04d24d66fc564c2de8dfd6cd9758833fbb76db1db28ab49cfb90f1943be1a"
+            },
+            {
+              "path": "chunks/multilingual/file001.gz.part0011",
+              "size": 47185920,
+              "sha256": "24fa62ff52d2a9fadb9b7f8872db209903498437e1b8e5560afcb09d86ee484d"
+            },
+            {
+              "path": "chunks/multilingual/file001.gz.part0012",
+              "size": 27988665,
+              "sha256": "72ceca5e1bb387a41f15beb8ddba5eca50429f6821d3228a05449342fc2a9dfa"
+            }
+          ],
+          "path": "model.safetensors",
+          "source_path": "multilingual/model.safetensors"
+        },
+        {
+          "size": 472,
+          "sha256": "25061739243b617ad88d1219ba6f8a9c86c5881ca28df024fa2d9b3b2fcc30c6",
+          "parts": [
+            {
+              "path": "chunks/multilingual/file002.gz.part0000",
+              "size": 295,
+              "sha256": "14fabe5e692199c4d84cb3a422a0e331a60dae174d0bb6fbf655eed7e940970e"
+            }
+          ],
+          "path": "rl_agent_config.json",
+          "source_path": "multilingual/rl_agent_config.json"
+        },
+        {
+          "size": 34363188,
+          "sha256": "609d8f4c067cd3950f88594c5a802616cea245823836ef5848ee4fc40aab5b6f",
+          "parts": [
+            {
+              "path": "chunks/multilingual/file003.gz.part0000",
+              "size": 5457263,
+              "sha256": "3dfd211764367bd048545ec9a8096480019c857971fe4389c1821254ac8df911"
+            }
+          ],
+          "path": "tokenizer/tokenizer.json",
+          "source_path": "multilingual/tokenizer/tokenizer.json"
+        },
+        {
+          "size": 524,
+          "sha256": "6c6b2d8e3c84ce0e671c129cd6b374b235d6f9863042a5836358d00a89bbb5a1",
+          "parts": [
+            {
+              "path": "chunks/multilingual/file004.gz.part0000",
+              "size": 263,
+              "sha256": "74ba92e12ea02e3c6894d92b0470b46f615bb9b4897d48de7c2f33957dd96995"
+            }
+          ],
+          "path": "tokenizer/tokenizer_config.json",
+          "source_path": "multilingual/tokenizer/tokenizer_config.json"
+        }
+      ]
     }
   ]
 }
