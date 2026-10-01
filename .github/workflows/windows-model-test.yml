@@ -19,6 +19,23 @@ jobs:
       - name: Install CPU runtime, restore all three checkpoints, run offline inference
         shell: pwsh
         run: ./test_windows.ps1 -Install -Model all -Device cpu
+      - name: Test offline Windows launcher, all presets, and interactive mode
+        shell: pwsh
+        run: |
+          foreach ($Preset in @('triage', 'email', 'guard', 'moderation', 'router')) {
+            & .\laya-local.cmd 'I was charged twice. Please refund the duplicate today.' --preset $Preset --json | Out-File -Encoding utf8 "reports/local-$Preset.json"
+            if ($LASTEXITCODE -ne 0) { throw "Local launcher failed: $Preset" }
+          }
+          foreach ($Model in @('multilingual', 'typed-decisions')) {
+            & .\laya-local.cmd 'I was charged twice. Please refund the duplicate today.' --model $Model --preset triage --json | Out-File -Encoding utf8 "reports/local-$Model.json"
+            if ($LASTEXITCODE -ne 0) { throw "Local checkpoint failed: $Model" }
+          }
+          @('I was charged twice. Please refund me.', 'The integration is broken and blocking my work.', 'quit') | & .\laya-local.cmd --preset triage | Out-File -Encoding utf8 reports/local-interactive.txt
+          if ($LASTEXITCODE -ne 0) { throw 'Local interactive mode failed' }
+          $Output = Get-Content reports/local-interactive.txt -Raw
+          if ([regex]::Matches($Output, 'refund_requested:').Count -ne 2) { throw 'Interactive mode did not answer both prompts' }
+          & .venv/Scripts/python.exe restore.py --verify-only
+          if ($LASTEXITCODE -ne 0) { throw 'Local launcher changed the restored files' }
       - name: Capture runtime versions
         if: always()
         shell: pwsh
