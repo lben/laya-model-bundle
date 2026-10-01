@@ -1,0 +1,463 @@
+{
+  "format_version": 1,
+  "compression": "gzip",
+  "chunk_limit_bytes": 47185920,
+  "source": {
+    "repository": "convaiinnovations/laya",
+    "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+    "license": "Apache-2.0"
+  },
+  "models": [
+    {
+      "name": "english",
+      "directory": "laya",
+      "source_subfolder": "",
+      "files": [
+        {
+          "size": 1913,
+          "sha256": "4df0e0949c31f080be9a0ccce253e9b176ddbdd953e97796607ff2a20bc5ec7c",
+          "parts": [
+            {
+              "path": "chunks/english/file000.gz.part0000",
+              "size": 298,
+              "sha256": "aa10a04e71de1ed597763fe8f81dbb22bd35f27ed014dfdc0b33fd1a8d473178"
+            }
+          ],
+          "path": ".gitattributes",
+          "source_path": ".gitattributes"
+        },
+        {
+          "size": 23187,
+          "sha256": "00355613796b3f5860b0d5b20392381d26580ec242e04a1fd150c7f116858602",
+          "parts": [
+            {
+              "path": "chunks/english/file001.gz.part0000",
+              "size": 9058,
+              "sha256": "bf8235ecf9cdfaa8ea5fb1aff907ae248f1510ab94223e26c13befd76d2f7884"
+            }
+          ],
+          "path": "README.md",
+          "source_path": "README.md"
+        },
+        {
+          "size": 260892,
+          "sha256": "e01e49f0d842b4616e44c4c9a0feb92a9ae45efeb533f8f838888715dc89c2b9",
+          "parts": [
+            {
+              "path": "chunks/english/file002.gz.part0000",
+              "size": 232093,
+              "sha256": "2f7deb3d0d60fd9c54346d7fe66d9f58c13c0c9daf7a20f596daacf090ae4436"
+            }
+          ],
+          "path": "assets/laya_benchmark.png",
+          "source_path": "assets/laya_benchmark.png"
+        },
+        {
+          "size": 278159,
+          "sha256": "183b0b17e8d90e091582e415d9f1da0ef34b40c3db6ccd2c8bbfd2b9232b95a6",
+          "parts": [
+            {
+              "path": "chunks/english/file003.gz.part0000",
+              "size": 258307,
+              "sha256": "1e20a147010c47fffa54ced36f50609a02f83750ec219660e394b0213032aa33"
+            }
+          ],
+          "path": "assets/laya_benchmark_common.png",
+          "source_path": "assets/laya_benchmark_common.png"
+        },
+        {
+          "size": 216412,
+          "sha256": "5c06517ea7f3e5f3f84873ddaa3cb470f101ad0276f921c58886f8fb12fbe0a8",
+          "parts": [
+            {
+              "path": "chunks/english/file004.gz.part0000",
+              "size": 202066,
+              "sha256": "7723089d09381c21215132f7ba124d0cd786a6798b6a13925e7c9bc724f1c735"
+            }
+          ],
+          "path": "assets/laya_vs_jev.png",
+          "source_path": "assets/laya_vs_jev.png"
+        },
+        {
+          "size": 487005,
+          "sha256": "ee47b751d524a0bb65159e026141b4ce70cc83d03b14df8ec68afbc7bcdb95b3",
+          "parts": [
+            {
+              "path": "chunks/english/file005.gz.part0000",
+              "size": 441935,
+              "sha256": "ac9b37bf863c26f149ec682fb1393503799325160762aaa175286c16c462528f"
+            }
+          ],
+          "path": "assets/laya_vs_jev_full.png",
+          "source_path": "assets/laya_vs_jev_full.png"
+        },
+        {
+          "size": 27666,
+          "sha256": "e683b423cf4f13961fced54a29fad6bb8bb733a0bfc28960c011f8b9f773ca7c",
+          "parts": [
+            {
+              "path": "chunks/english/file006.gz.part0000",
+              "size": 26443,
+              "sha256": "e1e987ae0e54704083b6abf4bb29ae1e5a1cca222efbc65493e05577aad9218d"
+            }
+          ],
+          "path": "assets/logo-lockup-dark.png",
+          "source_path": "assets/logo-lockup-dark.png"
+        },
+        {
+          "size": 1590,
+          "sha256": "40c23ec9db5837c09e5ef7d6dc46ffda8eda28f50d2040936e23e882b9c46b93",
+          "parts": [
+            {
+              "path": "chunks/english/file007.gz.part0000",
+              "size": 650,
+              "sha256": "2ebecf7e525cbeda77d25109690eccba64487d3b70caf1da5faf588226a0b0ee"
+            }
+          ],
+          "path": "assets/logo-lockup-dark.svg",
+          "source_path": "assets/logo-lockup-dark.svg"
+        },
+        {
+          "size": 26761,
+          "sha256": "e0235069e914c7889612fcba8b0a8c82133a6ee8a871c9076e867c22fa156f4d",
+          "parts": [
+            {
+              "path": "chunks/english/file008.gz.part0000",
+              "size": 25367,
+              "sha256": "7089e1033d2b78a6b381a20eabfce0c34d43f045ebd14f7692528a14fed5bfce"
+            }
+          ],
+          "path": "assets/logo-lockup.png",
+          "source_path": "assets/logo-lockup.png"
+        },
+        {
+          "size": 1590,
+          "sha256": "a1f8e8b98fbcc7cd410e42ba997548c01fe780217d82678a38d24a39e6365821",
+          "parts": [
+            {
+              "path": "chunks/english/file009.gz.part0000",
+              "size": 648,
+              "sha256": "2341259ce4cff74269a17080eb4859da819afe4cf480453620ce51030642d2ef"
+            }
+          ],
+          "path": "assets/logo-lockup.svg",
+          "source_path": "assets/logo-lockup.svg"
+        },
+        {
+          "size": 17378,
+          "sha256": "f542388fb4ddaf5f1afe44db8fead9303f75ba38913a0b94654976a89c6f6b35",
+          "parts": [
+            {
+              "path": "chunks/english/file010.gz.part0000",
+              "size": 16286,
+              "sha256": "88239fc631aacf7fc4a1232db1d62bfb10714f71f2f731f049c3d1549bf6a325"
+            }
+          ],
+          "path": "assets/logo-mark-ink.png",
+          "source_path": "assets/logo-mark-ink.png"
+        },
+        {
+          "size": 1320,
+          "sha256": "c95f251f6e7fe888995763645d8ad351323f64fa0eff7d8d17f65aac90e0108c",
+          "parts": [
+            {
+              "path": "chunks/english/file011.gz.part0000",
+              "size": 545,
+              "sha256": "6c8d31c8eea8575edd04bf4a05090ec4c26e334fd3b701e6ebd22b87857981e9"
+            }
+          ],
+          "path": "assets/logo-mark-ink.svg",
+          "source_path": "assets/logo-mark-ink.svg"
+        },
+        {
+          "size": 1380,
+          "sha256": "c8d281d8a6c9ae3d0c2864e291ce9a463f50f8f52b5ef1b271d3c277b7a75c28",
+          "parts": [
+            {
+              "path": "chunks/english/file012.gz.part0000",
+              "size": 553,
+              "sha256": "c18d0b5c33c0393cf26c632404ff678c2d6a4a0294cd053cb5d1e026e6927b44"
+            }
+          ],
+          "path": "assets/logo-mark-mono.svg",
+          "source_path": "assets/logo-mark-mono.svg"
+        },
+        {
+          "size": 17962,
+          "sha256": "bb04c3ec2afbf455d81f73512e79fce1bc910444e3258335e66305d3ab969367",
+          "parts": [
+            {
+              "path": "chunks/english/file013.gz.part0000",
+              "size": 17244,
+              "sha256": "ab165b464b1769d418d99f9da9dcaa7c43e88146fbaf56a0dd085a37efb8bf66"
+            }
+          ],
+          "path": "assets/logo-mark.png",
+          "source_path": "assets/logo-mark.png"
+        },
+        {
+          "size": 1320,
+          "sha256": "377539eb0f4255bc27fb53afffaa1b9e1acffafa4f3699c6a673dafd8b7bd870",
+          "parts": [
+            {
+              "path": "chunks/english/file014.gz.part0000",
+              "size": 547,
+              "sha256": "a85bed397b86f5e14b7bdeb512759eec4a8667f419d542014a667846a901a47c"
+            }
+          ],
+          "path": "assets/logo-mark.svg",
+          "source_path": "assets/logo-mark.svg"
+        },
+        {
+          "size": 3937,
+          "sha256": "1b1c0a6e23251ac8cae81e723bc98a31ca5483522c742937e263c2ecee42f343",
+          "parts": [
+            {
+              "path": "chunks/english/file015.gz.part0000",
+              "size": 1792,
+              "sha256": "a69d91689680afdcf9981642a93819f28d06af49f9bc103174b974fb3e4c96ce"
+            }
+          ],
+          "path": "email_utils.py",
+          "source_path": "email_utils.py"
+        },
+        {
+          "size": 2083,
+          "sha256": "bf3ab80598fdccf414855a2ce80f22859e4492d06ca8a62ddd1cfb63972f8979",
+          "parts": [
+            {
+              "path": "chunks/english/file016.gz.part0000",
+              "size": 602,
+              "sha256": "af4190d5a752a3a41849b8f67d251866e2f51e26babb0203fe2dbdc44d460bdf"
+            }
+          ],
+          "path": "encoder/config.json",
+          "source_path": "encoder/config.json"
+        },
+        {
+          "size": 467466,
+          "sha256": "78e4b926bfca3950ff5441d1030a1453515973fbe5d7dd70a1c764a81f0d3d38",
+          "parts": [
+            {
+              "path": "chunks/english/file017.gz.part0000",
+              "size": 421177,
+              "sha256": "d4f782a7f926fe95951f841df7a92a4348a727703d0e9c8e5126b4d1cb1b1bc1"
+            }
+          ],
+          "path": "eval/benchmark_comparison.png",
+          "source_path": "eval/benchmark_comparison.png"
+        },
+        {
+          "size": 65436,
+          "sha256": "9dd0e76e2f4f03042f23d479f8f318b77abbcca6a3ba97923fb5cd20d3e2c15e",
+          "parts": [
+            {
+              "path": "chunks/english/file018.gz.part0000",
+              "size": 59132,
+              "sha256": "fc5c981067ea5596429ec23ab66ba779c3fb8c25a87c27daba554fd0d461a11a"
+            }
+          ],
+          "path": "eval/reliability_eval_in.png",
+          "source_path": "eval/reliability_eval_in.png"
+        },
+        {
+          "size": 72014,
+          "sha256": "4e0c014b721b0d32aadeaf8a643ee41fd2a30bdfddda1b44124aa64d2fd08490",
+          "parts": [
+            {
+              "path": "chunks/english/file019.gz.part0000",
+              "size": 64827,
+              "sha256": "405837715000b902ad655aebd73b924d13f5009dfd2de9cfa52230971ec8ebf7"
+            }
+          ],
+          "path": "eval/reliability_eval_zs.png",
+          "source_path": "eval/reliability_eval_zs.png"
+        },
+        {
+          "size": 2976,
+          "sha256": "13b0c98eb9c0f65c7ff3452321dabdfa22d96655454dfb14116983ae7d681a60",
+          "parts": [
+            {
+              "path": "chunks/english/file020.gz.part0000",
+              "size": 809,
+              "sha256": "a4b3bad8331fa5f4b61fbed1c2571543999c4a5300bb22e6c8cc2be5c3b5ac35"
+            }
+          ],
+          "path": "eval/results.json",
+          "source_path": "eval/results.json"
+        },
+        {
+          "size": 1608,
+          "sha256": "d8477988dc14e30e2430eb5ddead07506fe2d2df25e75ee0b9379b20022cee28",
+          "parts": [
+            {
+              "path": "chunks/english/file021.gz.part0000",
+              "size": 707,
+              "sha256": "76652e75db621580cf860978e1ebc5a8d0f6d963525f27cf27bebc69c49692ec"
+            }
+          ],
+          "path": "eval/results.md",
+          "source_path": "eval/results.md"
+        },
+        {
+          "size": 842609210,
+          "sha256": "891102d372688fc2a094dac56a384bc537b87c63f21f9f3dac0be2b7cbc8d86c",
+          "parts": [
+            {
+              "path": "chunks/english/file022.gz.part0000",
+              "size": 47185920,
+              "sha256": "df4c0fb7abfdc63f0f8f378399ab3dab3cb745262ba8af3b5c4d4a9562cc2cae"
+            },
+            {
+              "path": "chunks/english/file022.gz.part0001",
+              "size": 47185920,
+              "sha256": "31baadd54233ecfc697d2546e7d0a98ddf3bb1fca1ff64546d59415ab20fcc38"
+            },
+            {
+              "path": "chunks/english/file022.gz.part0002",
+              "size": 47185920,
+              "sha256": "8be7ec74c7ac792d8dbb1ca275bd3d38bb062e4cd73a57aca2416ba65d32795e"
+            },
+            {
+              "path": "chunks/english/file022.gz.part0003",
+              "size": 47185920,
+              "sha256": "c0b5ee1db8b42613bb55ffa3e34450ea89649b9bf1a03055ce4892d0e148de11"
+            },
+            {
+              "path": "chunks/english/file022.gz.part0004",
+              "size": 47185920,
+              "sha256": "3f54c62f488ee6fa7e58071b814e1482ce7e40afba8901ee71765ecc504cc0e3"
+            },
+            {
+              "path": "chunks/english/file022.gz.part0005",
+              "size": 47185920,
+              "sha256": "f4e84e3ec1768678774943d6cb22a2642a14e84523a8eadeab63612ca290daea"
+            },
+            {
+              "path": "chunks/english/file022.gz.part0006",
+              "size": 47185920,
+              "sha256": "aef5df24628edc555ba8e3058fa8b21da7c78c2b1b90c2963bbcc93f00c02ad8"
+            },
+            {
+              "path": "chunks/english/file022.gz.part0007",
+              "size": 47185920,
+              "sha256": "c64cf7b72999a32a454f9c12507ec0da2cf492acea9f52b1efc087175d910e66"
+            },
+            {
+              "path": "chunks/english/file022.gz.part0008",
+              "size": 47185920,
+              "sha256": "82399f8060c4b980fc3d5ab5ac013001c9c238eb87768688961dc983abf0a99e"
+            },
+            {
+              "path": "chunks/english/file022.gz.part0009",
+              "size": 47185920,
+              "sha256": "a1d695a9e173fe46499b069af8bd4bd9d1a568e90cc3ed593ce7dea0de5bca87"
+            },
+            {
+              "path": "chunks/english/file022.gz.part0010",
+              "size": 47185920,
+              "sha256": "35fdfc4de7befe00493e36fa7193f589aa4b9d2c17ee8b7d4213e74a1951b1d7"
+            },
+            {
+              "path": "chunks/english/file022.gz.part0011",
+              "size": 47185920,
+              "sha256": "1d49b890cddf6eb8aa5bcd30b6d1497130a2e3f4434fe3ec8d5046f6b0975a13"
+            },
+            {
+              "path": "chunks/english/file022.gz.part0012",
+              "size": 47185920,
+              "sha256": "7bc13db1080519ea29f3049f33d29d26ee032789edbb7aa897816a6ddfb3ef70"
+            },
+            {
+              "path": "chunks/english/file022.gz.part0013",
+              "size": 47185920,
+              "sha256": "fd93b0aaebe3895eea53da2b6cc805bde42278fcca7a586e5a4fefc678979893"
+            },
+            {
+              "path": "chunks/english/file022.gz.part0014",
+              "size": 47185920,
+              "sha256": "6081deed9d7cae7419666ff9b4e0137abc46fb6bfb9daff0669d570171e2cdff"
+            },
+            {
+              "path": "chunks/english/file022.gz.part0015",
+              "size": 47185920,
+              "sha256": "a6e7fd13804e20432a14eb28b7dd1f3a9d2186c0e8cf69d0a894535f67967d86"
+            },
+            {
+              "path": "chunks/english/file022.gz.part0016",
+              "size": 22791682,
+              "sha256": "37ca074cc93d952d920c3f9a84536d8da04395240f20ddba9126d242f049604b"
+            }
+          ],
+          "path": "model.safetensors",
+          "source_path": "model.safetensors"
+        },
+        {
+          "size": 4732,
+          "sha256": "be3b46819c9999c3ef88e0f2ecf6d3ab1cdfed1d9a8b466fc89811e34d44031b",
+          "parts": [
+            {
+              "path": "chunks/english/file023.gz.part0000",
+              "size": 1729,
+              "sha256": "9caebf348ae2a994e9be8ac9842fd5fd3d280f2b054d38b5381a979b23cd0747"
+            }
+          ],
+          "path": "rl_agent_api.py",
+          "source_path": "rl_agent_api.py"
+        },
+        {
+          "size": 745,
+          "sha256": "ae287b56bbcf5f8c4f4541ae9dfd00c914c4c48b940b8398c3058af37ba92bbd",
+          "parts": [
+            {
+              "path": "chunks/english/file024.gz.part0000",
+              "size": 423,
+              "sha256": "8da3298ca950bffed192782095204a567da18cdac7fc256f070cdedf722078d3"
+            }
+          ],
+          "path": "rl_agent_config.json",
+          "source_path": "rl_agent_config.json"
+        },
+        {
+          "size": 19139,
+          "sha256": "8d83611d480c971d640a7b7d3aa2f2219c5e8455e9cc2329fd073681bd8be23e",
+          "parts": [
+            {
+              "path": "chunks/english/file025.gz.part0000",
+              "size": 6629,
+              "sha256": "2f320469343d44d60ac6857288ba3d815a0cb980f3e0c0eeb62331a19ea6e70c"
+            }
+          ],
+          "path": "rl_common.py",
+          "source_path": "rl_common.py"
+        },
+        {
+          "size": 3583228,
+          "sha256": "6c8aaa9a542084f2457eab775d4eeb51f92a70c0fd9de28d5edb0ddec3c08d30",
+          "parts": [
+            {
+              "path": "chunks/english/file026.gz.part0000",
+              "size": 659990,
+              "sha256": "3596c221af2a89e661325b4dcaffe6a04bdd4938155cb607996d53dc6b601937"
+            }
+          ],
+          "path": "tokenizer/tokenizer.json",
+          "source_path": "tokenizer/tokenizer.json"
+        },
+        {
+          "size": 308,
+          "sha256": "50044de60daaa73df97d262e15a40d4faf0160e7d742df64b377877a1320dd12",
+          "parts": [
+            {
+              "path": "chunks/english/file027.gz.part0000",
+              "size": 199,
+              "sha256": "b4daae4779442afb287b5e27de2a95ed7d0373fd7f6096a81724a92981f14bb4"
+            }
+          ],
+          "path": "tokenizer/tokenizer_config.json",
+          "source_path": "tokenizer/tokenizer_config.json"
+        }
+      ]
+    }
+  ]
+}

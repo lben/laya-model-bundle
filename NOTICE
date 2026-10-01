@@ -1,0 +1,15 @@
+Laya System 1 model bundle
+
+Upstream model files: Convai Innovations / Nandakishor M
+Source: https://huggingface.co/convaiinnovations/laya
+Runtime: https://github.com/NandhaKishorM/laya
+License: Apache License, Version 2.0
+
+This bundle redistributes unmodified official model snapshot files in a
+lossless gzip container. The upstream revision and per-file identities are
+recorded in manifest.json and source-lock.json. The upstream README and
+source files retain their original contents and notices upon restoration.
+
+Compression/restoration, Windows testing, and packaging scripts are supplied
+under the Apache License, Version 2.0. This packaging project is independent
+of and is not an endorsement by the upstream authors.
