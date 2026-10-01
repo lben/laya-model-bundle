@@ -10,6 +10,8 @@ Included checkpoints from [convaiinnovations/laya](https://huggingface.co/convai
 | Multilingual | `models/laya-multilingual` | Model for multilingual inputs |
 | Typed decisions | `models/laya-typed-decisions` | Checkpoint fine-tuned for typed decision workflows |
 
+The complete bundle contains **82 chunks (2.01 GiB compressed)** and restores to **2.21 GiB** of original files. The pinned source revision is `55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851`.
+
 `manifest.json` pins the upstream revision and records original file lengths, SHA-256 hashes, chunk order, and compressed chunk hashes. `source-lock.json` records upstream Git/LFS object identifiers. Model weights, tokenizers, encoder configs, decision configs, and all other snapshot files are preserved. The two bundled subfolders become independent local model directories. Compression does **not** quantize or change weights.
 
 ## Windows: clone, restore, and test
