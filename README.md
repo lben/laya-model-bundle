@@ -85,6 +85,8 @@ Replace the path with `models/laya-multilingual` or `models/laya-typed-decisions
 
 ## Validation and maintenance
 
+All three checkpoints passed restoration and real offline CPU inference on Windows on 2026-10-01. See [VALIDATION.md](VALIDATION.md) for the successful run, runtime versions, and reports.
+
 - `python -m unittest discover -s tests -v` tests stream reconstruction, empty files, many chunk boundaries, corruption, missing chunks, original checksum failures, decompression size limits, safe paths, and preservation of changed files. CI runs these on Windows and Linux.
 - The manually triggered **Windows restore and offline inference** workflow checks the published real weights, all restored SHA-256 hashes, and actual offline CPU inference on each checkpoint. Reports are saved as a workflow artifact.
 - Maintainers can package a clean new bundle with `python scripts/pack_models.py --model english`, then `multilingual`, then `typed-decisions`. It streams the pinned upstream snapshot and validates Git blob/LFS digests before accepting each file. `--git-index` saves local disk space by storing chunks in Git's index and deleting working copies; it is intended for publishing from a staging checkout.
