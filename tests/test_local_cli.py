@@ -121,6 +121,70 @@ class LocalCliTests(unittest.TestCase):
         self.assertEqual(self.agent.predict.call_count, 2)
         self.assertIn('bad request', self.stderr.getvalue())
 
+    def test_plain_text_buckets_print_all_probabilities_and_reuse_local_model(self):
+        choice = {'answers': {'bucket': {'type': 'choice', 'choice': 'A', 'probabilities': {'A': 0.4, 'B': 0.3, 'C': 0.2, 'D': 0.1}}}}
+        self.agent.predict.side_effect = [choice, {'answers': {'test': {'noul': 0.75}}}]
+        instruction = 'From the following options A=billing | B=technical support | C=sales | D=other categorize the following message on each one: “I was charged twice.”'
+        with patch('builtins.input', side_effect=[instruction, 'Ordinary preset message', 'quit']):
+            self.assertEqual(self.run_cli(), 0)
+        self.assertEqual(self.laya.load.call_count, 1)
+        first = self.agent.predict.call_args_list[0]
+        self.assertEqual(first.args[0], {'message': 'I was charged twice.'})
+        self.assertEqual(first.args[1]['bucket']['criteria'], {'A': 'billing', 'B': 'technical support', 'C': 'sales', 'D': 'other'})
+        self.assertEqual(first.args[1]['bucket']['type'], 'choice')
+        second = self.agent.predict.call_args_list[1]
+        self.assertEqual(second.args[1], self.presets.triage_questions())
+        for line in ['A: 0.4000', 'B: 0.3000', 'C: 0.2000', 'D: 0.1000']:
+            self.assertIn(line, self.stdout.getvalue())
+
+    def test_bad_bucket_instruction_does_not_reach_inference(self):
+        self.assertEqual(self.run_cli('From the following options A B categorize the following message on each one: ""'), 1)
+        self.agent.predict.assert_not_called()
+        self.assertIn('message to categorize is empty', self.stderr.getvalue())
+
+
+class PlainTextBucketTests(unittest.TestCase):
+    def parse(self, options, message='“I was charged twice.”'):
+        return laya_local.parse_bucket_request(f'From the following options {options} categorize the following message on each one: {message}')
+
+    def test_exact_requested_format_with_letters_and_curly_quotes(self):
+        text, questions = self.parse('A B C and D', '“message”')
+        self.assertEqual(text, 'message')
+        self.assertEqual(questions['bucket']['criteria'], {'A': 'A', 'B': 'B', 'C': 'C', 'D': 'D'})
+
+    def test_named_buckets_with_natural_final_and(self):
+        for options in ['billing, technical, sales and other', 'billing, technical, sales, and other', 'billing technical sales and other']:
+            with self.subTest(options=options):
+                _, questions = self.parse(options)
+                self.assertEqual(list(questions['bucket']['criteria']), ['billing', 'technical', 'sales', 'other'])
+
+    def test_explicit_descriptions_and_multiword_categories(self):
+        for delimiter in [', ', '; ', ' | ']:
+            with self.subTest(delimiter=delimiter):
+                _, questions = self.parse(delimiter.join(['A=billing and refunds', 'B: technical support', 'C=sales', 'D=research and development']))
+                self.assertEqual(questions['bucket']['criteria'], {'A': 'billing and refunds', 'B': 'technical support', 'C': 'sales', 'D': 'research and development'})
+        _, questions = self.parse('customer support | sales | research and development')
+        self.assertEqual(list(questions['bucket']['criteria']), ['customer support', 'sales', 'research and development'])
+
+    def test_message_quotes_and_punctuation_are_preserved(self):
+        for quoted in ['"Say \'hello\': A, B, C."', '“Say \'hello\': A, B, C.”', "‘Say 'hello': A, B, C.’", "Say 'hello': A, B, C."]:
+            with self.subTest(quoted=quoted):
+                message, _ = self.parse('A B', quoted)
+                self.assertEqual(message, "Say 'hello': A, B, C.")
+
+    def test_invalid_options_and_malformed_instruction(self):
+        for options in ['A', 'A a', 'A= | B=technical', '=billing | B=technical', 'A | | B']:
+            with self.subTest(options=options), self.assertRaises(ValueError):
+                self.parse(options)
+        with self.assertRaises(ValueError):
+            laya_local.parse_bucket_request('From the following options A B missing the message instruction')
+
+    def test_ordinary_text_uses_preset_and_format_is_case_insensitive(self):
+        self.assertIsNone(laya_local.parse_bucket_request('Please refund the duplicate charge.'))
+        message, questions = laya_local.parse_bucket_request('FROM THE FOLLOWING OPTIONS: billing, other CLASSIFY THE FOLLOWING MESSAGE: Duplicate charge')
+        self.assertEqual(message, 'Duplicate charge')
+        self.assertEqual(list(questions['bucket']['criteria']), ['billing', 'other'])
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -81,6 +81,26 @@ Use **`laya-local.cmd`** for this repository. The package's separate `.venv\Scri
 
 The cross-platform equivalent is `python laya_local.py --preset triage` using your environment's Python.
 
+### Custom buckets in plain text
+
+No JSON file is needed. At `laya>`, enter this supported sentence format:
+
+```text
+From the following options billing, technical, sales and other categorize the following message on each one: “I was charged twice. Please refund me.”
+```
+
+You can also give letter labels explicit meanings:
+
+```text
+From the following options A=billing | B=technical support | C=sales | D=other categorize the following message on each one: “I was charged twice. Please refund me.”
+```
+
+The launcher recognizes that sentence format and builds the structured question locally. It prints the winning option and the probability for **every** option. These are competing category probabilities, summing to approximately 1. No additional model or network service is used to parse the sentence.
+
+Separate options with commas, semicolons, or `|`; single-word options can also be separated by spaces. Descriptions can use `=` or `:`, with delimiters between options that contain spaces. Straight quotes and curly quotes around the message are both accepted, and quotes can be omitted. Bare `A B C and D` is accepted, but letters alone do not explain what the categories mean to the model.
+
+This format chooses custom buckets for that entry. Ordinary entries continue using the selected preset. It is a supported input format, rather than a general-purpose natural-language instruction parser.
+
 ## Use the restored model from Python
 
 Use the **Laya SDK**, which understands the decision head and typed questions:
