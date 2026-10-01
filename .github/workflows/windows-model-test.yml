@@ -1,0 +1,35 @@
+name: Windows restore and offline inference
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-checkpoints:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test stream restoration and corruption handling
+        run: python -m unittest discover -s tests -v
+      - name: Install CPU runtime, restore all three checkpoints, run offline inference
+        shell: pwsh
+        run: ./test_windows.ps1 -Install -Model all -Device cpu
+      - name: Capture runtime versions
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path '.venv/Scripts/python.exe') {
+            New-Item -ItemType Directory -Force reports | Out-Null
+            .venv/Scripts/python.exe -m pip freeze > reports/runtime-versions.txt
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-inference-reports
+          path: reports/
+          if-no-files-found: warn
