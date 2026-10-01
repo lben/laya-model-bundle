@@ -11,6 +11,7 @@ import sys
 from unittest.mock import patch
 
 from scripts.bundle import ROOT, load_manifest, safe_path, verify_model
+from laya_client import bucket_questions
 
 # Each upstream preset asks about a specific field in the input state.
 PRESETS = {
@@ -27,27 +28,6 @@ BUCKET_REQUEST = re.compile(
     r'(?:\s+on\s+each\s+one)?\s*:\s*(?P<message>.*)$',
     re.IGNORECASE | re.DOTALL,
 )
-
-
-def bucket_questions(pieces):
-    """Validate category names/descriptions and build an SDK choice question."""
-    criteria, seen = {}, set()
-    for piece in pieces:
-        piece = piece.strip()
-        if not piece:
-            raise ValueError('Each option needs a name; empty options are not allowed.')
-        pair = re.split(r'\s*[=:]\s*', piece, maxsplit=1)
-        label = pair[0].strip()
-        description = pair[1].strip() if len(pair) == 2 else label
-        if not label or not description:
-            raise ValueError('Use a name or a label with a description, such as A=billing.')
-        if label.casefold() in seen:
-            raise ValueError(f'Duplicate option: {label}')
-        seen.add(label.casefold())
-        criteria[label] = description
-    if len(criteria) < 2:
-        raise ValueError('Provide at least two options.')
-    return {'bucket': {'type': 'choice', 'instructions': 'Which option best categorizes `message`?', 'criteria': criteria}}
 
 
 def parse_options(options):

@@ -122,6 +122,76 @@ This format chooses custom buckets for that entry. Ordinary entries continue usi
 
 ## Use the restored model from Python
 
+### Easy import from another project
+
+After `git pull`, activate **your other project's Python environment** and install this local checkout:
+
+```powershell
+python -m pip install C:\Projects\laya-model-bundle
+```
+
+Change that path to your clone's directory. This uses your configured pip index (including company Artifactory), installs the pinned runtime dependencies, and does not create a virtual environment. If that environment already has every dependency from `requirements.txt`, you can add `--no-deps`. The installed package contains just the Python client/server code; the compressed chunks and restored weights stay in your clone. No `sys.path` edits, subprocess calls, or working-directory changes are needed.
+
+In your project:
+
+```python
+from laya_client import LocalLaya
+
+# Create this once at application startup, then reuse it for every request.
+model = LocalLaya(r"C:\Projects\laya-model-bundle\models\laya")
+result = model.classify(
+    "I was charged twice.",
+    ["billing", "technical", "sales", "other"],
+)
+print(result["choice"])
+print(result["probabilities"])  # probability for every option
+```
+
+`options` also accepts `"billing,technical,sales,other"` or a dictionary such as `{"A": "invoices and refunds", "B": "technical support"}`. `classify` returns the SDK's bucket answer, including `choice`, `probabilities`, and confidence fields. These are competing category probabilities, summing to approximately 1. Use `model.predict(state, questions, **kwargs)` for the complete SDK interface and other typed questions.
+
+The path must point at an already restored checkpoint folder. Other checkpoints are `models/laya-multilingual` and `models/laya-typed-decisions`. Pass `device="cuda"` for an available CUDA runtime. The client checks required local files, sets Hugging Face offline flags before importing the model runtime, loads an absolute local path, and preserves the tokenizer configuration. Restore/verify the trusted snapshot with `restore.py`; the importable client does not repeat full weight checksums on startup. Initialize it before importing other Hugging Face runtimes in your application. It leaves your application's HTTP/socket connections available. Calls on one client instance are serialized; create one per application process, rather than one per request.
+
+### Local HTTP API for any language
+
+The installed package also includes a small HTTP adapter with no extra web-framework dependencies. Start it in an environment with the runtime installed:
+
+```powershell
+python -m laya_api --model-path C:\Projects\laya-model-bundle\models\laya --port 8000
+```
+
+Or run it from the clone using the existing environment:
+
+```powershell
+.\.venv\Scripts\python.exe -m laya_api --model-path .\models\laya
+```
+
+It loads the model once, then serves `POST http://127.0.0.1:8000/classify` with this JSON body:
+
+```json
+{"message": "I was charged twice.", "options": ["billing", "technical", "sales", "other"]}
+```
+
+The response is the same dictionary returned by `classify`, with `choice` and `probabilities`. `options` can also be a comma-separated string or a description dictionary. `GET /health` returns `{"ready": true}` after startup. Invalid input returns HTTP 400; request bodies are limited to 1 MiB. This adapter binds to localhost and has no authentication; it is intended for trusted applications on the same machine. For a remote deployment, put the Python client behind your application's authenticated API. Browser frontends should call through their backend; this adapter does not enable CORS.
+
+For example, call it from another Python project using only the standard library:
+
+```python
+import json
+from urllib.request import Request, urlopen
+
+request = Request(
+    "http://127.0.0.1:8000/classify",
+    data=json.dumps({"message": "I was charged twice.", "options": "billing,technical,sales,other"}).encode(),
+    headers={"Content-Type": "application/json"},
+    method="POST",
+)
+with urlopen(request, timeout=120) as response:
+    result = json.load(response)
+print(result["choice"], result["probabilities"])
+```
+
+### Direct upstream SDK
+
 Use the **Laya SDK**, which understands the decision head and typed questions:
 
 ```python
@@ -152,6 +222,7 @@ Replace the path with `models/laya-multilingual` or `models/laya-typed-decisions
 All three checkpoints passed restoration and real offline CPU inference on Windows on 2026-10-01. See [VALIDATION.md](VALIDATION.md) for the successful run, runtime versions, and reports.
 
 - `python -m unittest discover -s tests -v` tests stream reconstruction, empty files, many chunk boundaries, corruption, missing chunks, original checksum failures, decompression size limits, safe paths, and preservation of changed files. It also tests local CLI preset selection, absolute checkpoint paths, network blocking, interactive model reuse, and rejection of missing/changed checkpoints. CI runs these on Windows and Linux.
+- Client/API tests cover model reuse, all three options formats, missing checkpoint files, tokenizer preservation, and real localhost HTTP requests with input errors and body limits. They mock the ML runtime; real checkpoint inference is validated separately by the manual Windows workflow.
 - The manually triggered **Windows restore and offline inference** workflow checks the published real weights, all restored SHA-256 hashes, and actual offline CPU inference on each checkpoint. Reports are saved as a workflow artifact.
 - Maintainers can package a clean new bundle with `python scripts/pack_models.py --model english`, then `multilingual`, then `typed-decisions`. It streams the pinned upstream snapshot and validates Git blob/LFS digests before accepting each file. `--git-index` saves local disk space by storing chunks in Git's index and deleting working copies; it is intended for publishing from a staging checkout.
 - Each chunk is below GitHub's [100 MB enforced per-object limit](https://docs.github.com/en/repositories/creating-and-managing-repositories/repository-limits). Upload model commits separately to stay below the 2 GB push limit. Avoid repeatedly committing replacement weight bundles, since binary history increases clone size.
