@@ -100,6 +100,33 @@ Omit the message for interactive mode with the same options on every entry:
 
 Use either `--options` or `--preset`. With `--options`, the message is passed directly to the classifier, including any instruction-like wording it contains. The existing local checkpoint, device, and JSON flags also work.
 
+### Read the message and options from files
+
+For large inputs, pass file paths instead of expanding file contents in PowerShell:
+
+```powershell
+.\laya-local.cmd "@.\message.txt" --options "@.\options.txt" --json
+```
+
+`message.txt` contains the complete message, including any line breaks. `options.txt` contains the usual comma-separated list, for example:
+
+```text
+billing,technical support,sales,other
+```
+
+You can also use explicit flags:
+
+```powershell
+.\laya-local.cmd --text-file .\message.txt --options-file .\options.txt --json
+.\laya-local.cmd "Inline message" --options-file .\options.txt
+.\laya-local.cmd "@.\message.txt" --options "billing,other"
+.\laya-local.cmd --options-file .\options.txt  # interactive with fixed options
+```
+
+Quote the entire `"@path"` argument in PowerShell, and quote any path containing spaces. Relative paths are resolved from your current directory. Files can be UTF-8 (with or without a BOM) or UTF-16 with a BOM, as commonly produced by Windows PowerShell. The message file's whitespace and line breaks are preserved; option entries are trimmed as usual. Missing, empty, unreadable, or invalid files produce an error before loading the model. Use either positional text or `--text-file`, and select only one of `--preset`, `--options`, or `--options-file`. A literal inline value beginning with `@` can be escaped as `@@`.
+
+Only the file paths travel through the shell, avoiding command-length limits. The model's context window still applies to the loaded text.
+
 ### Custom buckets in plain text
 
 No JSON file is needed. At `laya>`, enter this supported sentence format:

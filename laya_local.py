@@ -35,6 +35,28 @@ def parse_options(options):
     return bucket_questions(options.split(','))
 
 
+def read_text_file(filename):
+    """Read UTF-8 or BOM-marked UTF-16 files, including PowerShell output."""
+    if not filename:
+        raise ValueError('A file path is required after @.')
+    path = Path(filename).expanduser()
+    data = path.read_bytes()
+    encoding = 'utf-16' if data.startswith((b'\xff\xfe', b'\xfe\xff')) else 'utf-8-sig'
+    try:
+        return data.decode(encoding)
+    except UnicodeError as error:
+        raise ValueError(f'Cannot decode {path}. Save the file as UTF-8 or UTF-16 with a BOM.') from error
+
+
+def resolve_input(value):
+    """@path reads a file; @@ escapes a literal leading @."""
+    if value.startswith('@@'):
+        return value[1:]
+    if value.startswith('@'):
+        return read_text_file(value[1:])
+    return value
+
+
 def parse_bucket_request(text):
     """Convert the supported plain-text instruction into an SDK choice question."""
     text = text.strip()
@@ -125,10 +147,12 @@ def show_result(result, as_json, all_probabilities=False):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('text', nargs='*', help='text to classify; omit for interactive mode')
+    parser.add_argument('text', nargs='*', help='text or @path to a text file; omit for interactive mode')
+    parser.add_argument('--text-file', type=Path, help='read the message from a file instead of positional text')
     classification = parser.add_mutually_exclusive_group()
     classification.add_argument('--preset', choices=list(PRESETS), help='preset to use (default: triage)')
-    classification.add_argument('--options', help='comma-separated category names, optionally label=description; omit text for interactive mode')
+    classification.add_argument('--options', help='comma-separated category names or @path to a file; optionally label=description')
+    classification.add_argument('--options-file', type=Path, help='read comma-separated category names/descriptions from a file')
     parser.add_argument('--model', choices=['english', 'multilingual', 'typed-decisions'], default='english')
     parser.add_argument('--models-dir', type=Path, default=ROOT / 'models')
     parser.add_argument('--device', choices=['cpu', 'cuda'], default='cpu')
@@ -136,7 +160,25 @@ def main(argv=None):
     args = parser.parse_args(argv)
     args.preset = args.preset or 'triage'
     try:
-        fixed_questions = parse_options(args.options) if args.options is not None else None
+        if args.text_file is not None and args.text:
+            raise ValueError('Use positional text or --text-file, not both.')
+        file_message = args.text_file is not None or bool(args.text and args.text[0].startswith('@') and not args.text[0].startswith('@@'))
+        if file_message and len(args.text) > 1:
+            raise ValueError('Pass @path as the only message argument, or use --text-file.')
+        if args.text_file is not None:
+            text = read_text_file(args.text_file)
+        elif len(args.text) == 1:
+            text = resolve_input(args.text[0])
+        else:
+            text = ' '.join(args.text).strip()
+        if not file_message:
+            text = text.strip()
+        if file_message and not text.strip():
+            raise ValueError('The message file is empty.')
+        options = read_text_file(args.options_file) if args.options_file is not None else (
+            resolve_input(args.options) if args.options is not None else None
+        )
+        fixed_questions = parse_options(options) if options is not None else None
         with offline_mode():
             agent, directory = load_agent(args)
             if fixed_questions is None:
@@ -154,7 +196,6 @@ def main(argv=None):
                 else:
                     show_result(agent.predict({state_key: text}, questions), args.json)
 
-            text = ' '.join(args.text).strip()
             if text:
                 predict(text)
             else:

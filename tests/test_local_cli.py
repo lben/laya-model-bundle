@@ -182,6 +182,92 @@ class LocalCliTests(unittest.TestCase):
         self.assertEqual(raised.exception.code, 2)
         self.laya.load.assert_not_called()
 
+    def test_large_message_and_options_files_with_message_first(self):
+        message = ('A lengthy customer message with quotes " and punctuation & |.\r\n' * 2000)
+        description = 'billing and refund requests ' * 1000
+        message_file = self.root / 'message with spaces.txt'
+        options_file = self.root / 'options with spaces.txt'
+        message_file.write_bytes(message.encode('utf-8'))
+        options_file.write_bytes(f'A={description},\r\n B=other'.encode('utf-8'))
+        self.assertEqual(self.run_cli(f'@{message_file}', '--options', f'@{options_file}', '--json'), 0)
+        state, questions = self.agent.predict.call_args.args
+        self.assertEqual(state, {'message': message})
+        self.assertEqual(questions['bucket']['criteria'], {'A': description.strip(), 'B': 'other'})
+        self.assertEqual(json.loads(self.stdout.getvalue()), self.agent.predict.return_value)
+
+    def test_explicit_file_flags_support_powershell_encodings(self):
+        message = '  Crème brûlée, 中文, and a refund request.\r\n'
+        for encoding in ['utf-8', 'utf-8-sig', 'utf-16']:
+            with self.subTest(encoding=encoding):
+                message_file = self.root / 'message.txt'
+                options_file = self.root / 'options.txt'
+                message_file.write_bytes(message.encode(encoding))
+                options_file.write_bytes('billing, other\r\n'.encode(encoding))
+                self.assertEqual(self.run_cli('--text-file', str(message_file), '--options-file', str(options_file)), 0)
+                self.assertEqual(self.agent.predict.call_args.args[0], {'message': message})
+                self.assertEqual(self.agent.predict.call_args.args[1]['bucket']['criteria'], {'billing': 'billing', 'other': 'other'})
+
+    def test_file_and_inline_inputs_can_be_mixed(self):
+        message_file = self.root / 'message.txt'
+        options_file = self.root / 'options.txt'
+        message_file.write_text('Refund please', encoding='utf-8')
+        options_file.write_text('billing,other', encoding='utf-8')
+        self.assertEqual(self.run_cli(f'@{message_file}', '--options', 'billing,other'), 0)
+        self.assertEqual(self.agent.predict.call_args.args[0], {'message': 'Refund please'})
+        self.assertEqual(self.run_cli('Inline message', '--options-file', str(options_file)), 0)
+        self.assertEqual(self.agent.predict.call_args.args[0], {'message': 'Inline message'})
+        self.assertEqual(self.run_cli('--text-file', str(message_file), '--preset', 'triage'), 0)
+        self.assertEqual(self.agent.predict.call_args.args[0], {'message': 'Refund please'})
+
+    def test_interactive_options_file_reuses_categories(self):
+        options_file = self.root / 'options.txt'
+        options_file.write_text('billing,other', encoding='utf-8')
+        with patch('builtins.input', side_effect=['First', 'Second', 'quit']):
+            self.assertEqual(self.run_cli('--options-file', str(options_file)), 0)
+        self.assertEqual(self.laya.load.call_count, 1)
+        self.assertEqual(self.agent.predict.call_count, 2)
+        for call in self.agent.predict.call_args_list:
+            self.assertEqual(call.args[1]['bucket']['criteria'], {'billing': 'billing', 'other': 'other'})
+
+    def test_missing_empty_and_invalid_files_fail_before_loading(self):
+        empty = self.root / 'empty.txt'
+        empty.write_text(' \r\n', encoding='utf-8')
+        invalid = self.root / 'invalid.txt'
+        invalid.write_bytes(b'\x80')
+        bad_options = self.root / 'bad-options.txt'
+        bad_options.write_text('billing,BILLING', encoding='utf-8')
+        cases = [
+            (f'@{self.root / "missing.txt"}',),
+            ('message', '--options', f'@{self.root / "missing.txt"}'),
+            ('--text-file', str(empty)),
+            (f'@{empty}',),
+            ('message', '--options-file', str(empty)),
+            (f'@{invalid}',),
+            ('message', '--options-file', str(invalid)),
+            ('message', '--options-file', str(bad_options)),
+            ('@',),
+        ]
+        for args in cases:
+            with self.subTest(args=args):
+                self.assertEqual(self.run_cli(*args), 1)
+        self.laya.load.assert_not_called()
+        self.agent.predict.assert_not_called()
+
+    def test_conflicting_file_inputs_are_rejected(self):
+        for args in [('message', '--text-file', 'unused.txt'), ('@unused.txt', 'extra')]:
+            with self.subTest(args=args):
+                self.assertEqual(self.run_cli(*args), 1)
+        for args in [('--options', 'A,B', '--options-file', 'unused.txt'), ('--options-file', 'unused.txt', '--preset', 'triage')]:
+            with self.subTest(args=args), self.assertRaises(SystemExit) as raised:
+                self.run_cli(*args)
+            self.assertEqual(raised.exception.code, 2)
+        self.laya.load.assert_not_called()
+
+    def test_literal_leading_at_sign_can_be_escaped(self):
+        self.assertEqual(self.run_cli('@@customer requests a refund', '--options', '@@account,other'), 0)
+        self.assertEqual(self.agent.predict.call_args.args[0], {'message': '@customer requests a refund'})
+        self.assertEqual(self.agent.predict.call_args.args[1]['bucket']['criteria'], {'@account': '@account', 'other': 'other'})
+
 
 class OptionsFlagTests(unittest.TestCase):
     def test_comma_list_preserves_multiword_names_and_and(self):
