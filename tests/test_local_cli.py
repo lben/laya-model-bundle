@@ -298,6 +298,55 @@ class LocalCliTests(unittest.TestCase):
         self.assertEqual(self.run_cli('message', '--options-file', str(path), '--max-len', '4096', '--head-max-len', '3072'), 0)
         self.assertEqual(list(self.agent.predict.call_args.args[1]['bucket']['criteria']), options)
 
+    def test_top_n_text_ranks_and_preserves_full_inference_options(self):
+        self.agent.predict.return_value = {'answers': {'bucket': {'choice': 'C', 'probabilities': {'A': 0.1, 'B': 0.3, 'C': 0.5, 'D': 0.1}}}}
+        self.assertEqual(self.run_cli('message', '--options', 'A,B,C,D', '--top-n', '2'), 0)
+        output = self.stdout.getvalue()
+        self.assertIn('C: 0.5000', output)
+        self.assertIn('B: 0.3000', output)
+        self.assertLess(output.index('  C:'), output.index('  B:'))
+        self.assertNotIn('  A:', output)
+        self.assertNotIn('  D:', output)
+        self.assertEqual(list(self.agent.predict.call_args.args[1]['bucket']['criteria']), ['A', 'B', 'C', 'D'])
+        self.assertEqual(self.agent.predict.call_args.kwargs, {})
+
+    def test_top_n_json_does_not_renormalize_or_mutate_sdk_result(self):
+        original = {'answers': {'bucket': {'choice': 'B', 'confidence': 0.6, 'probabilities': {'A': 0.2, 'B': 0.5, 'C': 0.3}},
+                                'urgency': {'score': 1, 'probabilities': {'0': 0.2, '1': 0.8}}}, 'usage': {'input_tokens': 123}}
+        self.agent.predict.return_value = original
+        self.assertEqual(self.run_cli('message', '--options', 'A,B,C', '--top-n', '2', '--json'), 0)
+        result = json.loads(self.stdout.getvalue())
+        self.assertEqual(result['answers']['bucket']['probabilities'], {'B': 0.5, 'C': 0.3})
+        self.assertEqual(list(result['answers']['bucket']['probabilities']), ['B', 'C'])
+        self.assertEqual(result['answers']['bucket']['choice'], 'B')
+        self.assertEqual(result['answers']['bucket']['confidence'], 0.6)
+        self.assertEqual(result['answers']['urgency'], original['answers']['urgency'])
+        self.assertEqual(result['usage'], original['usage'])
+        self.assertEqual(original['answers']['bucket']['probabilities'], {'A': 0.2, 'B': 0.5, 'C': 0.3})
+
+    def test_top_n_ties_and_larger_than_option_count(self):
+        result = {'answers': {'bucket': {'choice': 'C', 'probabilities': {'A': 0.4, 'B': 0.2, 'C': 0.4}}}}
+        self.assertEqual(laya_local.limit_probabilities(result, 1)['answers']['bucket']['probabilities'], {'C': 0.4})
+        self.assertEqual(list(laya_local.limit_probabilities(result, 10)['answers']['bucket']['probabilities']), ['C', 'A', 'B'])
+        self.assertIs(laya_local.limit_probabilities(result, None), result)
+
+    def test_top_n_applies_to_presets_plain_text_and_interactive_mode(self):
+        self.agent.predict.return_value = {'answers': {'bucket': {'choice': 'A', 'probabilities': {'A': 0.7, 'B': 0.3}}}}
+        with patch('builtins.input', side_effect=['From the following options A B categorize the following message: First', 'Ordinary preset entry', 'quit']):
+            self.assertEqual(self.run_cli('--top-n', '1'), 0)
+        self.assertEqual(self.agent.predict.call_count, 2)
+        self.assertEqual(self.stdout.getvalue().count('  A: 0.7000'), 2)
+        self.assertNotIn('  B:', self.stdout.getvalue())
+
+    def test_invalid_top_n_is_rejected_before_loading(self):
+        for n in ['0', '-1']:
+            with self.subTest(n=n):
+                self.assertEqual(self.run_cli('message', '--top-n', n), 1)
+        with self.assertRaises(SystemExit) as raised:
+            self.run_cli('message', '--top-n', '1.5')
+        self.assertEqual(raised.exception.code, 2)
+        self.laya.load.assert_not_called()
+
 
 class OptionsFlagTests(unittest.TestCase):
     def test_comma_list_preserves_multiword_names_and_and(self):

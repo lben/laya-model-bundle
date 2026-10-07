@@ -127,7 +127,23 @@ def load_agent(args):
     return agent, directory
 
 
-def show_result(result, as_json, all_probabilities=False):
+def limit_probabilities(result, top_n):
+    """Limit choice output only, preserving scores and the original SDK result."""
+    if top_n is None:
+        return result
+    answers = {}
+    for name, answer in result['answers'].items():
+        if 'choice' in answer:
+            # Prefer the selected option within ties, so it survives the cutoff.
+            ranked = sorted(answer['probabilities'].items(), key=lambda item: (-item[1], item[0] != answer['choice']))
+            answers[name] = {**answer, 'probabilities': dict(ranked[:top_n])}
+        else:
+            answers[name] = answer
+    return {**result, 'answers': answers}
+
+
+def show_result(result, as_json, all_probabilities=False, top_n=None):
+    result = limit_probabilities(result, top_n)
     if as_json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return
@@ -140,7 +156,7 @@ def show_result(result, as_json, all_probabilities=False):
         else:
             detail = f'yes probability {answer["noul"]:.3f}'
         print(f'{name}: {detail}')
-        if all_probabilities and 'choice' in answer:
+        if (all_probabilities or top_n is not None) and 'choice' in answer:
             for label, probability in answer['probabilities'].items():
                 print(f'  {label}: {probability:.4f}')
 
@@ -158,10 +174,13 @@ def main(argv=None):
     parser.add_argument('--device', choices=['cpu', 'cuda'], default='cpu')
     parser.add_argument('--max-len', type=int, help='total input token limit (default: checkpoint setting)')
     parser.add_argument('--head-max-len', type=int, help='question/options token budget (default: checkpoint setting)')
-    parser.add_argument('--json', action='store_true', help='print complete structured results')
+    parser.add_argument('--top-n', type=int, help='show only the N highest-probability options per choice answer')
+    parser.add_argument('--json', action='store_true', help='print structured results (optionally limited by --top-n)')
     args = parser.parse_args(argv)
     args.preset = args.preset or 'triage'
     try:
+        if args.top_n is not None and args.top_n <= 0:
+            raise ValueError('top-n must be a positive integer.')
         budgets = token_budgets(args.max_len, args.head_max_len)
         if args.text_file is not None and args.text:
             raise ValueError('Use positional text or --text-file, not both.')
@@ -190,14 +209,14 @@ def main(argv=None):
 
             def predict(text):
                 if fixed_questions is not None:
-                    show_result(agent.predict({'message': text}, fixed_questions, **budgets), args.json, all_probabilities=True)
+                    show_result(agent.predict({'message': text}, fixed_questions, **budgets), args.json, all_probabilities=True, top_n=args.top_n)
                     return
                 custom = parse_bucket_request(text)
                 if custom is not None:
                     message, bucket_questions = custom
-                    show_result(agent.predict({'message': message}, bucket_questions, **budgets), args.json, all_probabilities=True)
+                    show_result(agent.predict({'message': message}, bucket_questions, **budgets), args.json, all_probabilities=True, top_n=args.top_n)
                 else:
-                    show_result(agent.predict({state_key: text}, questions, **budgets), args.json)
+                    show_result(agent.predict({state_key: text}, questions, **budgets), args.json, top_n=args.top_n)
 
             if text:
                 predict(text)

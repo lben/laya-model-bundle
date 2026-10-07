@@ -92,6 +92,15 @@ Put the message first, then a comma-separated list of categories. No message fla
 
 The command prints the winning category and a probability for every option. Probabilities sum to approximately 1. Surround the list with quotes, especially for names containing spaces. Spaces around commas are ignored; provide at least two distinct, nonempty options. Optional `label=description` or `label:description` entries give short labels a meaning. Commas separate entries, so names/descriptions must not contain commas.
 
+Add `--top-n N` to show only the N options with the highest probabilities, sorted from highest to lowest:
+
+```powershell
+.\laya-local.cmd "I was charged twice." --options "billing,technical,sales,other" --top-n 2
+.\laya-local.cmd "@.\message.txt" --options "@.\options.txt" --max-len 4096 --head-max-len 3072 --top-n 10 --json
+```
+
+The flag works in text output, JSON output, and interactive mode. It limits each choice answer's `probabilities` dictionary; the selected option, confidence fields, and other answer types are preserved. N must be positive; if it exceeds the option count, all options are returned. Ties prefer the selected option, then preserve the result's original order. Omitting `--top-n` preserves existing output. Every option is still scored, and probabilities retain their original values rather than being renormalized, so the displayed subset may sum to less than 1. This is an output limit; the token budget must still fit all supplied options.
+
 Omit the message for interactive mode with the same options on every entry:
 
 ```powershell
