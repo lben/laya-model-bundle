@@ -127,6 +127,28 @@ Quote the entire `"@path"` argument in PowerShell, and quote any path containing
 
 Only the file paths travel through the shell, avoiding command-length limits. The model's context window still applies to the loaded text.
 
+### Large option lists and token limits
+
+If Laya reports `only ... option markers fit in max_len=512`, its model input is too short to hold the whole question. The file was read successfully; this is the inference token limit. The English checkpoint defaults to `max_len=512` for the entire input and `head_max_len=192` for formatting the question/options. These limits count tokenizer tokens, not characters or file bytes.
+
+To keep a large list such as 379 options, start with:
+
+```powershell
+.\laya-local.cmd "@.\message.txt" --options "@.\options.txt" --max-len 4096 --head-max-len 3072 --json
+```
+
+`--max-len` raises the total input limit. `--head-max-len` gives more room to the question and option descriptions; increase the total limit with it so the message still has room. The SDK may shorten individual option descriptions to fit the head budget, even when every marker fits. This command keeps every option in one choice question; it does not shortlist or split/renormalize probabilities across batches. If your descriptions or message need more space, the bundled encoders support up to 8192 positions: try `--max-len 8192 --head-max-len 6144`. Actual message room depends on the rendered question length. Long messages can still be truncated by the SDK, and larger settings cost more memory and time. Validate accuracy with your own messages/options; fitting all options is not an accuracy guarantee.
+
+These flags also work with presets and interactive mode. Omitting them preserves checkpoint defaults. Both values must be positive, and an explicitly supplied head budget must be below an explicitly supplied total limit. The controls are forwarded per call, without editing the restored checkpoint files.
+
+The Python client accepts the same settings:
+
+```python
+result = model.classify(message, options, max_len=4096, head_max_len=3072)
+```
+
+For the local HTTP API, include `"max_len": 4096` and `"head_max_len": 3072` in the request JSON, or set server defaults with `python -m laya_api --model-path .\models\laya --max-len 4096 --head-max-len 3072`.
+
 ### Custom buckets in plain text
 
 No JSON file is needed. At `laya>`, enter this supported sentence format:

@@ -4,12 +4,12 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import sys
 
-from laya_client import LocalLaya
+from laya_client import LocalLaya, token_budgets
 
 MAX_BODY_BYTES = 1024 * 1024
 
 
-def make_handler(model):
+def make_handler(model, default_budgets=None):
     class Handler(BaseHTTPRequestHandler):
         def reply(self, status, payload):
             body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
@@ -44,7 +44,12 @@ def make_handler(model):
                 payload = json.loads(self.rfile.read(length))
                 if not isinstance(payload, dict):
                     raise ValueError('JSON body must be an object with message and options.')
-                result = model.classify(payload.get('message'), payload.get('options'))
+                budgets = dict(default_budgets or {})
+                for key in ('max_len', 'head_max_len'):
+                    if key in payload:
+                        budgets[key] = payload[key]
+                budgets = token_budgets(**budgets)
+                result = model.classify(payload.get('message'), payload.get('options'), **budgets)
             except (ValueError, TypeError, UnicodeError) as error:
                 self.reply(400, {'error': str(error)})
                 return
@@ -62,10 +67,13 @@ def main(argv=None):
     parser.add_argument('--model-path', required=True, help='restored checkpoint directory')
     parser.add_argument('--device', choices=['cpu', 'cuda'], default='cpu')
     parser.add_argument('--port', type=int, default=8000)
+    parser.add_argument('--max-len', type=int, help='default total input token limit')
+    parser.add_argument('--head-max-len', type=int, help='default question/options token budget')
     args = parser.parse_args(argv)
     try:
+        budgets = token_budgets(args.max_len, args.head_max_len)
         model = LocalLaya(args.model_path, device=args.device)
-        with ThreadingHTTPServer(('127.0.0.1', args.port), make_handler(model)) as server:
+        with ThreadingHTTPServer(('127.0.0.1', args.port), make_handler(model, budgets)) as server:
             print(f'Laya ready at http://127.0.0.1:{server.server_port}/classify', flush=True)
             try:
                 server.serve_forever()

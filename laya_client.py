@@ -47,6 +47,19 @@ def options_questions(options):
     raise ValueError('Options must be a comma-separated string, a list of names, or a description dictionary.')
 
 
+def token_budgets(max_len=None, head_max_len=None):
+    """Validate optional per-call token limits without changing checkpoint defaults."""
+    budgets = {}
+    for name, value in [('max_len', max_len), ('head_max_len', head_max_len)]:
+        if value is not None:
+            if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+                raise ValueError(f'{name} must be a positive integer.')
+            budgets[name] = value
+    if max_len is not None and head_max_len is not None and head_max_len >= max_len:
+        raise ValueError('head_max_len must be smaller than max_len to leave room for the message.')
+    return budgets
+
+
 _LOAD_LOCK = Lock()
 
 
@@ -88,12 +101,13 @@ class LocalLaya:
                 raise RuntimeError(f'Laya could not use the requested device: {device}')
         self._prediction_lock = Lock()
 
-    def classify(self, message, options):
+    def classify(self, message, options, *, max_len=None, head_max_len=None):
         """Return a dict with choice, probabilities, and the SDK's confidence fields."""
         if not isinstance(message, str) or not message.strip():
             raise ValueError('Message must be a nonempty string.')
         questions = options_questions(options)
-        result = self.predict({'message': message}, questions)
+        budgets = token_budgets(max_len, head_max_len)
+        result = self.predict({'message': message}, questions, **budgets)
         return dict(result['answers']['bucket'])
 
     def predict(self, state, questions, **kwargs):

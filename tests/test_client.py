@@ -10,7 +10,7 @@ import types
 import unittest
 from unittest.mock import Mock, patch
 
-from laya_client import LocalLaya, options_questions
+from laya_client import LocalLaya, options_questions, token_budgets
 from laya_api import make_handler
 
 
@@ -86,6 +86,19 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(result, self.agent.predict.return_value)
         self.agent.predict.assert_called_once_with('message', questions, max_len=512)
 
+    def test_classify_token_budgets_are_per_call(self):
+        model = LocalLaya(self.directory)
+        model.classify('message', 'billing,other', max_len=4096, head_max_len=3072)
+        self.assertEqual(self.agent.predict.call_args.kwargs, {'max_len': 4096, 'head_max_len': 3072})
+        model.classify('next message', 'billing,other')
+        self.assertEqual(self.agent.predict.call_args.kwargs, {})
+
+    def test_invalid_token_budgets(self):
+        for budgets in [{'max_len': 0}, {'head_max_len': -1}, {'max_len': '4096'}, {'max_len': True},
+                        {'max_len': 512, 'head_max_len': 512}]:
+            with self.subTest(budgets=budgets), self.assertRaises(ValueError):
+                token_budgets(**budgets)
+
     def test_description_mapping_preserves_delimiters_in_description(self):
         question = options_questions({'A': 'billing, invoices: refunds = payments', 'B': 'other'})
         self.assertEqual(question['bucket']['criteria']['A'], 'billing, invoices: refunds = payments')
@@ -148,6 +161,15 @@ class ApiTests(unittest.TestCase):
             response.read()
         finally:
             connection.close()
+        self.model.classify.assert_not_called()
+
+    def test_http_token_budgets_and_validation(self):
+        payload = {'message': 'message', 'options': ['A', 'B'], 'max_len': 4096, 'head_max_len': 3072}
+        self.assertEqual(self.request('POST', '/classify', json.dumps(payload))[0], 200)
+        self.model.classify.assert_called_with('message', ['A', 'B'], max_len=4096, head_max_len=3072)
+        self.model.classify.reset_mock()
+        payload['max_len'] = 0
+        self.assertEqual(self.request('POST', '/classify', json.dumps(payload))[0], 400)
         self.model.classify.assert_not_called()
 
 

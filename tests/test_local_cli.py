@@ -268,6 +268,36 @@ class LocalCliTests(unittest.TestCase):
         self.assertEqual(self.agent.predict.call_args.args[0], {'message': '@customer requests a refund'})
         self.assertEqual(self.agent.predict.call_args.args[1]['bucket']['criteria'], {'@account': '@account', 'other': 'other'})
 
+    def test_token_budgets_reach_options_plain_text_and_presets(self):
+        cases = [
+            ('message', '--options', 'billing,other'),
+            ('From the following options A B categorize the following message: message',),
+            ('message', '--preset', 'triage'),
+        ]
+        for args in cases:
+            with self.subTest(args=args):
+                self.assertEqual(self.run_cli(*args, '--max-len', '4096', '--head-max-len', '3072'), 0)
+                self.assertEqual(self.agent.predict.call_args.kwargs, {'max_len': 4096, 'head_max_len': 3072})
+
+    def test_interactive_token_budgets_are_reused(self):
+        with patch('builtins.input', side_effect=['First', 'Second', 'quit']):
+            self.assertEqual(self.run_cli('--options', 'A,B', '--max-len', '4096', '--head-max-len', '3072'), 0)
+        for call in self.agent.predict.call_args_list:
+            self.assertEqual(call.kwargs, {'max_len': 4096, 'head_max_len': 3072})
+
+    def test_invalid_token_budgets_fail_before_model_load(self):
+        for args in [('--max-len', '0'), ('--head-max-len', '-1'), ('--max-len', '512', '--head-max-len', '512')]:
+            with self.subTest(args=args):
+                self.assertEqual(self.run_cli('message', *args), 1)
+        self.laya.load.assert_not_called()
+
+    def test_379_file_options_are_preserved_with_larger_budget(self):
+        options = [f'category_{i}' for i in range(379)]
+        path = self.root / 'options.txt'
+        path.write_text(','.join(options), encoding='utf-8')
+        self.assertEqual(self.run_cli('message', '--options-file', str(path), '--max-len', '4096', '--head-max-len', '3072'), 0)
+        self.assertEqual(list(self.agent.predict.call_args.args[1]['bucket']['criteria']), options)
+
 
 class OptionsFlagTests(unittest.TestCase):
     def test_comma_list_preserves_multiword_names_and_and(self):

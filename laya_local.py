@@ -11,7 +11,7 @@ import sys
 from unittest.mock import patch
 
 from scripts.bundle import ROOT, load_manifest, safe_path, verify_model
-from laya_client import bucket_questions
+from laya_client import bucket_questions, token_budgets
 
 # Each upstream preset asks about a specific field in the input state.
 PRESETS = {
@@ -156,10 +156,13 @@ def main(argv=None):
     parser.add_argument('--model', choices=['english', 'multilingual', 'typed-decisions'], default='english')
     parser.add_argument('--models-dir', type=Path, default=ROOT / 'models')
     parser.add_argument('--device', choices=['cpu', 'cuda'], default='cpu')
+    parser.add_argument('--max-len', type=int, help='total input token limit (default: checkpoint setting)')
+    parser.add_argument('--head-max-len', type=int, help='question/options token budget (default: checkpoint setting)')
     parser.add_argument('--json', action='store_true', help='print complete structured results')
     args = parser.parse_args(argv)
     args.preset = args.preset or 'triage'
     try:
+        budgets = token_budgets(args.max_len, args.head_max_len)
         if args.text_file is not None and args.text:
             raise ValueError('Use positional text or --text-file, not both.')
         file_message = args.text_file is not None or bool(args.text and args.text[0].startswith('@') and not args.text[0].startswith('@@'))
@@ -187,14 +190,14 @@ def main(argv=None):
 
             def predict(text):
                 if fixed_questions is not None:
-                    show_result(agent.predict({'message': text}, fixed_questions), args.json, all_probabilities=True)
+                    show_result(agent.predict({'message': text}, fixed_questions, **budgets), args.json, all_probabilities=True)
                     return
                 custom = parse_bucket_request(text)
                 if custom is not None:
                     message, bucket_questions = custom
-                    show_result(agent.predict({'message': message}, bucket_questions), args.json, all_probabilities=True)
+                    show_result(agent.predict({'message': message}, bucket_questions, **budgets), args.json, all_probabilities=True)
                 else:
-                    show_result(agent.predict({state_key: text}, questions), args.json)
+                    show_result(agent.predict({state_key: text}, questions, **budgets), args.json)
 
             if text:
                 predict(text)
