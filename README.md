@@ -146,7 +146,7 @@ To keep a large list such as 379 options, start with:
 .\laya-local.cmd "@.\message.txt" --options "@.\options.txt" --max-len 4096 --head-max-len 3072 --json
 ```
 
-`--max-len` raises the total input limit. `--head-max-len` gives more room to the question and option descriptions; increase the total limit with it so the message still has room. The SDK may shorten individual option descriptions to fit the head budget, even when every marker fits. This command keeps every option in one choice question; it does not shortlist or split/renormalize probabilities across batches. If your descriptions or message need more space, the bundled encoders support up to 8192 positions: try `--max-len 8192 --head-max-len 6144`. Actual message room depends on the rendered question length. Long messages can still be truncated by the SDK, and larger settings cost more memory and time. Validate accuracy with your own messages/options; fitting all options is not an accuracy guarantee.
+`--max-len` raises the total input limit. `--head-max-len` gives more room to the question and option descriptions; increase the total limit with it so the message still has room. The SDK may shorten individual option descriptions to fit the head budget, even when every marker fits. This command keeps every option in each choice question; it does not shortlist options or split/renormalize probabilities across option batches. If your descriptions need more space, the bundled encoders support up to 8192 positions: try `--max-len 8192 --head-max-len 6144`. Actual message room depends on the rendered question length. Longer messages are now scanned in chunks automatically (below). Larger settings cost more memory and time. Validate accuracy with your own messages/options; fitting all options is not an accuracy guarantee.
 
 These flags also work with presets and interactive mode. Omitting them preserves checkpoint defaults. Both values must be positive, and an explicitly supplied head budget must be below an explicitly supplied total limit. The controls are forwarded per call, without editing the restored checkpoint files.
 
@@ -157,6 +157,40 @@ result = model.classify(message, options, max_len=4096, head_max_len=3072)
 ```
 
 For the local HTTP API, include `"max_len": 4096` and `"head_max_len": 3072` in the request JSON, or set server defaults with `python -m laya_api --model-path .\models\laya --max-len 4096 --head-max-len 3072`.
+
+### Automatic processing of long messages
+
+`--chunking auto` is the default. The launcher measures token use with the model's tokenizer and the SDK's question renderer, including every option and the message field's JSON overhead. A message that fits is passed through normally. A longer message is split into overlapping token chunks, and **every option is scored in every chunk**. The model is loaded once and chunks are processed sequentially to bound memory.
+
+For a long message with 379 options:
+
+```powershell
+.\laya-local.cmd "@.\message.txt" --options "@.\options.txt" --max-len 4096 --head-max-len 3072 --top-n 10 --json
+```
+
+Control the behavior explicitly:
+
+```powershell
+# Always scan, optionally using smaller chunks.
+.\laya-local.cmd "@.\message.txt" --options "@.\options.txt" --max-len 4096 --head-max-len 3072 --chunking on --chunk-tokens 800 --chunk-overlap 64 --json
+# Single pass: keeps the SDK's truncation behavior and reports a warning if text is dropped.
+.\laya-local.cmd "@.\message.txt" --options "@.\options.txt" --max-len 4096 --head-max-len 3072 --chunking off --json
+```
+
+`--chunk-tokens` caps message tokens per chunk; the effective size is also limited by space left after rendering the questions/options and a small safety margin. Overlap defaults to up to 64 tokens (at most a quarter of the chunk). `--chunk-overlap 0` disables overlap. A supplied overlap must be smaller than the effective chunk size. Each decoded chunk is checked again before inference, and a further truncated chunk causes an error rather than returning a partial document result. Encoder limits above 8192 are rejected instead of risking indexing errors. Message chunking cannot fix an option list that itself exceeds the input window; keep your larger token-budget flags.
+
+Results follow the upstream long-document aggregation rule: for choice/score questions, keep the answer from the chunk with the highest `answer_confidence`; for yes/no (`noul`), keep the strongest yes probability. This preserves localized evidence that would be diluted by averaging many neutral chunks. The returned distribution is the selected chunk's distribution, **not a calibrated probability for the whole document**. All chunks contribute candidates, but the final answer does not reason jointly across distant chunks; validate this strategy for your task.
+
+When a scan is performed, JSON includes `chunking.chunks`, `message_tokens`, `covered_tokens`, `overlap_tokens`, and `aggregation`. Each answer's `window` identifies the deciding chunk: zero-based index, token start/end offsets into the sanitized message text (end exclusive), and total chunk count. `usage.windows` counts the chunks processed; `usage.input_tokens` sums their actual model input tokens including repeated options/overlap. `usage.state_tokens` counts the original serialized state once, and `state_tokens_dropped=0` / `truncated=false` indicate complete scan coverage. Progress goes to stderr so stdout remains valid JSON. `--top-n` filters only the final probabilities after the scan. Short automatic calls preserve their existing output shape.
+
+Python classification uses the same automatic scanning:
+
+```python
+result = model.classify(message, options, max_len=4096, head_max_len=3072,
+                        chunking="auto", chunk_tokens=800, chunk_overlap=64)
+```
+
+Scanned Python results include `window`, `chunking`, and `usage` alongside the selected answer. The advanced `model.predict(state, questions, **kwargs)` method still calls the SDK directly; automatic scanning applies to `classify`. HTTP classification accepts the JSON fields `chunking`, `chunk_tokens`, and `chunk_overlap`, and the server accepts equivalent `--chunking`, `--chunk-tokens`, and `--chunk-overlap` defaults.
 
 ### Custom buckets in plain text
 
@@ -207,7 +241,7 @@ print(result["probabilities"])  # probability for every option
 
 `options` also accepts `"billing,technical,sales,other"` or a dictionary such as `{"A": "invoices and refunds", "B": "technical support"}`. `classify` returns the SDK's bucket answer, including `choice`, `probabilities`, and confidence fields. These are competing category probabilities, summing to approximately 1. Use `model.predict(state, questions, **kwargs)` for the complete SDK interface and other typed questions.
 
-The path must point at an already restored checkpoint folder. Other checkpoints are `models/laya-multilingual` and `models/laya-typed-decisions`. Pass `device="cuda"` for an available CUDA runtime. The client checks required local files, sets Hugging Face offline flags before importing the model runtime, loads an absolute local path, and preserves the tokenizer configuration. Restore/verify the trusted snapshot with `restore.py`; the importable client does not repeat full weight checksums on startup. Initialize it before importing other Hugging Face runtimes in your application. It leaves your application's HTTP/socket connections available. Calls on one client instance are serialized; create one per application process, rather than one per request.
+The path must point at an already restored checkpoint folder. Other checkpoints are `models/laya-multilingual` and `models/laya-typed-decisions`. Pass `device="cuda"` for an available CUDA runtime. The client checks required local files, sets Hugging Face offline flags before importing the model runtime, loads an absolute local path, and preserves the tokenizer configuration. Restore/verify the trusted snapshot with `restore.py`; the importable client does not repeat full weight checksums on startup. Initialize it before importing other Hugging Face runtimes in your application. It leaves your application's HTTP/socket connections available. Calls on one client instance are serialized; create one per application process, rather than one per request. After pulling client updates, rerun the local `pip install` command in your other project's environment.
 
 ### Local HTTP API for any language
 

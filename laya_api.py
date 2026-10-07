@@ -5,11 +5,12 @@ import json
 import sys
 
 from laya_client import LocalLaya, token_budgets
+from laya_chunking import chunk_settings
 
 MAX_BODY_BYTES = 1024 * 1024
 
 
-def make_handler(model, default_budgets=None):
+def make_handler(model, default_budgets=None, default_chunks=None):
     class Handler(BaseHTTPRequestHandler):
         def reply(self, status, payload):
             body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
@@ -49,7 +50,12 @@ def make_handler(model, default_budgets=None):
                     if key in payload:
                         budgets[key] = payload[key]
                 budgets = token_budgets(**budgets)
-                result = model.classify(payload.get('message'), payload.get('options'), **budgets)
+                chunks = dict(default_chunks or {})
+                for key in ('chunking', 'chunk_tokens', 'chunk_overlap'):
+                    if key in payload:
+                        chunks[key] = payload[key]
+                chunk_settings(**chunks)
+                result = model.classify(payload.get('message'), payload.get('options'), **budgets, **chunks)
             except (ValueError, TypeError, UnicodeError) as error:
                 self.reply(400, {'error': str(error)})
                 return
@@ -69,11 +75,16 @@ def main(argv=None):
     parser.add_argument('--port', type=int, default=8000)
     parser.add_argument('--max-len', type=int, help='default total input token limit')
     parser.add_argument('--head-max-len', type=int, help='default question/options token budget')
+    parser.add_argument('--chunking', choices=['auto', 'on', 'off'], default='auto')
+    parser.add_argument('--chunk-tokens', type=int)
+    parser.add_argument('--chunk-overlap', type=int)
     args = parser.parse_args(argv)
     try:
         budgets = token_budgets(args.max_len, args.head_max_len)
+        chunks = {'chunking': args.chunking, 'chunk_tokens': args.chunk_tokens, 'chunk_overlap': args.chunk_overlap}
+        chunk_settings(**chunks)
         model = LocalLaya(args.model_path, device=args.device)
-        with ThreadingHTTPServer(('127.0.0.1', args.port), make_handler(model, budgets)) as server:
+        with ThreadingHTTPServer(('127.0.0.1', args.port), make_handler(model, budgets, chunks)) as server:
             print(f'Laya ready at http://127.0.0.1:{server.server_port}/classify', flush=True)
             try:
                 server.serve_forever()

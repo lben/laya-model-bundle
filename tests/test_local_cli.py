@@ -11,6 +11,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 import laya_local
+from laya_chunking import TextPlan
 
 
 class LocalCliTests(unittest.TestCase):
@@ -45,6 +46,7 @@ class LocalCliTests(unittest.TestCase):
         self.stack.enter_context(patch.object(laya_local, 'load_manifest', return_value={'models': [self.model]}))
         self.stack.enter_context(contextlib.redirect_stdout(self.stdout))
         self.stack.enter_context(contextlib.redirect_stderr(self.stderr))
+        self.stack.enter_context(patch('laya_chunking.analyze_text', return_value=TextPlan([], 0, 8192, False, 512, 192)))
 
     def run_cli(self, *args):
         return laya_local.main(['--models-dir', str(self.root), *args])
@@ -345,6 +347,27 @@ class LocalCliTests(unittest.TestCase):
         with self.assertRaises(SystemExit) as raised:
             self.run_cli('message', '--top-n', '1.5')
         self.assertEqual(raised.exception.code, 2)
+        self.laya.load.assert_not_called()
+
+    def test_chunking_controls_forwarded_and_top_n_after_scan(self):
+        result = {'answers': {'bucket': {'choice': 'B', 'probabilities': {'A': 0.2, 'B': 0.8},
+                                         'window': {'index': 4, 'count': 5}}},
+                  'chunking': {'mode': 'on', 'chunks': 5, 'covered_tokens': 30000}, 'usage': {'truncated': False}}
+        with patch.object(laya_local, 'predict_text', return_value=result) as scan:
+            self.assertEqual(self.run_cli('message', '--options', 'A,B', '--chunking', 'on', '--chunk-tokens', '1000',
+                                          '--chunk-overlap', '64', '--top-n', '1', '--json'), 0)
+        self.assertEqual(scan.call_args.kwargs['chunking'], 'on')
+        self.assertEqual(scan.call_args.kwargs['chunk_tokens'], 1000)
+        self.assertEqual(scan.call_args.kwargs['chunk_overlap'], 64)
+        output = json.loads(self.stdout.getvalue())
+        self.assertEqual(output['answers']['bucket']['probabilities'], {'B': 0.8})
+        self.assertEqual(output['chunking']['covered_tokens'], 30000)
+        self.assertEqual(output['answers']['bucket']['window']['index'], 4)
+
+    def test_invalid_chunk_parameters_fail_before_loading(self):
+        for args in [('--chunk-tokens', '0'), ('--chunk-overlap', '-1'), ('--chunk-tokens', '10', '--chunk-overlap', '10')]:
+            with self.subTest(args=args):
+                self.assertEqual(self.run_cli('message', *args), 1)
         self.laya.load.assert_not_called()
 
 

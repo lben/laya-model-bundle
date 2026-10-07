@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import re
 from threading import Lock
+from laya_chunking import chunk_settings, predict_text
 
 
 def bucket_questions(pieces):
@@ -101,14 +102,22 @@ class LocalLaya:
                 raise RuntimeError(f'Laya could not use the requested device: {device}')
         self._prediction_lock = Lock()
 
-    def classify(self, message, options, *, max_len=None, head_max_len=None):
+    def classify(self, message, options, *, max_len=None, head_max_len=None,
+                 chunking='auto', chunk_tokens=None, chunk_overlap=None):
         """Return a dict with choice, probabilities, and the SDK's confidence fields."""
         if not isinstance(message, str) or not message.strip():
             raise ValueError('Message must be a nonempty string.')
         questions = options_questions(options)
         budgets = token_budgets(max_len, head_max_len)
-        result = self.predict({'message': message}, questions, **budgets)
-        return dict(result['answers']['bucket'])
+        chunk_settings(chunking, chunk_tokens, chunk_overlap)
+        with self._prediction_lock:
+            result = predict_text(self._agent, message, questions, budgets=budgets,
+                                  chunking=chunking, chunk_tokens=chunk_tokens, chunk_overlap=chunk_overlap)
+        answer = dict(result['answers']['bucket'])
+        if 'chunking' in result:
+            answer['chunking'] = result['chunking']
+            answer['usage'] = result['usage']
+        return answer
 
     def predict(self, state, questions, **kwargs):
         """Advanced interface: return the complete SDK result for typed questions."""

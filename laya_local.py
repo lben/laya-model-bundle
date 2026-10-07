@@ -12,6 +12,7 @@ from unittest.mock import patch
 
 from scripts.bundle import ROOT, load_manifest, safe_path, verify_model
 from laya_client import bucket_questions, token_budgets
+from laya_chunking import chunk_settings, predict_text
 
 # Each upstream preset asks about a specific field in the input state.
 PRESETS = {
@@ -175,6 +176,9 @@ def main(argv=None):
     parser.add_argument('--max-len', type=int, help='total input token limit (default: checkpoint setting)')
     parser.add_argument('--head-max-len', type=int, help='question/options token budget (default: checkpoint setting)')
     parser.add_argument('--top-n', type=int, help='show only the N highest-probability options per choice answer')
+    parser.add_argument('--chunking', choices=['auto', 'on', 'off'], default='auto', help='scan long messages in chunks (default: auto)')
+    parser.add_argument('--chunk-tokens', type=int, help='maximum message tokens per chunk; capped by space left after options')
+    parser.add_argument('--chunk-overlap', type=int, help='overlap tokens between chunks (default: up to 64)')
     parser.add_argument('--json', action='store_true', help='print structured results (optionally limited by --top-n)')
     args = parser.parse_args(argv)
     args.preset = args.preset or 'triage'
@@ -182,6 +186,7 @@ def main(argv=None):
         if args.top_n is not None and args.top_n <= 0:
             raise ValueError('top-n must be a positive integer.')
         budgets = token_budgets(args.max_len, args.head_max_len)
+        chunk_settings(args.chunking, args.chunk_tokens, args.chunk_overlap)
         if args.text_file is not None and args.text:
             raise ValueError('Use positional text or --text-file, not both.')
         file_message = args.text_file is not None or bool(args.text and args.text[0].startswith('@') and not args.text[0].startswith('@@'))
@@ -209,14 +214,20 @@ def main(argv=None):
 
             def predict(text):
                 if fixed_questions is not None:
-                    show_result(agent.predict({'message': text}, fixed_questions, **budgets), args.json, all_probabilities=True, top_n=args.top_n)
-                    return
-                custom = parse_bucket_request(text)
-                if custom is not None:
-                    message, bucket_questions = custom
-                    show_result(agent.predict({'message': message}, bucket_questions, **budgets), args.json, all_probabilities=True, top_n=args.top_n)
+                    message, selected_questions, field, all_probs = text, fixed_questions, 'message', True
                 else:
-                    show_result(agent.predict({state_key: text}, questions, **budgets), args.json, top_n=args.top_n)
+                    custom = parse_bucket_request(text)
+                    if custom is not None:
+                        message, selected_questions = custom
+                        field, all_probs = 'message', True
+                    else:
+                        message, selected_questions, field, all_probs = text, questions, state_key, False
+                result = predict_text(agent, message, selected_questions, state_key=field, budgets=budgets,
+                                      chunking=args.chunking, chunk_tokens=args.chunk_tokens, chunk_overlap=args.chunk_overlap,
+                                      progress=lambda current, total: print(f'Processing chunk {current}/{total}...', file=sys.stderr))
+                if result.get('chunking', {}).get('warning'):
+                    print(f'WARNING: {result["chunking"]["warning"]}', file=sys.stderr)
+                show_result(result, args.json, all_probabilities=all_probs, top_n=args.top_n)
 
             if text:
                 predict(text)

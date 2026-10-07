@@ -37,6 +37,18 @@ The tested model/script commit was `7e7f89a`. The installer has since been simpl
 The workflow artifact includes `local-*.json`, `local-interactive.txt`, the baseline inference reports, and runtime versions.
 # Large option lists: token-budget validation
 
+## Automatic long-message scanning
+
+On **2026-10-07**, real offline inference on macOS ARM64 CPU tested a **31,509-token message with all 379 synthetic options** using `--max-len 4096 --head-max-len 3072 --top-n 10 --json` and the default automatic chunking mode.
+
+- The launcher planned and processed 33 overlapping chunks with 64 tokens of overlap, loading the English model once. Every chunk kept the full choice question and its 379 options.
+- JSON reported `chunking.message_tokens=31509`, `covered_tokens=31509`, `chunks=33`, and `aggregation="strongest-window"`.
+- Usage reported 134306 total model input tokens (including repeated options and overlap), `state_tokens=31514` for the original serialized state, `state_tokens_dropped=0`, `truncated=false`, and `windows=33`.
+- The final output contained 10 probabilities and retained the deciding window's token offsets. There was no oversized-tokenizer sequence warning or encoder indexing failure. The CLI socket guard was active throughout the scan.
+- This verifies complete scan coverage and output behavior, not correct categorization of the synthetic labels or calibrated whole-document confidence. As in the single-window validation below, the SDK emitted the checkpoint temperature calibration warning.
+
+The message was generated with `'Long customer message about billing and refunds. ' * 3500 + 'The final issue is customer support topic 123.'`; the options were the same synthetic list used below. The 75 local unit/API tests passed, including token coverage, overlap, late evidence, per-answer window attribution, force/off controls, preservation of all options, and top-N filtering after scanning. The installable 0.2.0 client/API/chunking modules also imported successfully outside the repository.
+
 On **2026-10-07**, the restored English checkpoint was tested with real offline CPU inference on macOS ARM64 using the repository's pinned runtime (`laya==0.3.22`, `torch==2.8.0`, `transformers==4.57.6`). This test used 379 synthetic category labels/descriptions and a short support message, passed through files to `laya_local.py`.
 
 - Default settings reproduced `question 'bucket': only 126 of its 379 option markers fit in max_len=512 with head_max_len=192 spent on the question`.

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "laya-local-client"
-version = "0.1.1"
+version = "0.2.0"
 description = "Importable classifier and local HTTP API for restored Laya models"
 requires-python = ">=3.10"
 dependencies = [
@@ -17,4 +17,4 @@ dependencies = [
 ]
 
 [tool.setuptools]
-py-modules = ["laya_client", "laya_api"]
+py-modules = ["laya_client", "laya_api", "laya_chunking"]

@@ -12,6 +12,7 @@ from unittest.mock import Mock, patch
 
 from laya_client import LocalLaya, options_questions, token_budgets
 from laya_api import make_handler
+from laya_chunking import TextPlan
 
 
 class ClientTests(unittest.TestCase):
@@ -36,6 +37,7 @@ class ClientTests(unittest.TestCase):
         self.addCleanup(stack.close)
         stack.enter_context(patch.dict('sys.modules', {'torch': self.torch, 'laya': self.laya}))
         stack.enter_context(patch.dict(os.environ))
+        stack.enter_context(patch('laya_chunking.analyze_text', return_value=TextPlan([], 0, 8192, False, 512, 192)))
 
     def test_load_once_and_classify_options_formats(self):
         model = LocalLaya(self.directory)
@@ -98,6 +100,15 @@ class ClientTests(unittest.TestCase):
                         {'max_len': 512, 'head_max_len': 512}]:
             with self.subTest(budgets=budgets), self.assertRaises(ValueError):
                 token_budgets(**budgets)
+
+    def test_classify_chunk_controls_and_metadata(self):
+        result = {'answers': {'bucket': self.answer}, 'chunking': {'chunks': 4}, 'usage': {'truncated': False}}
+        with patch('laya_client.predict_text', return_value=result) as scan:
+            model = LocalLaya(self.directory)
+            answer = model.classify('message', 'A,B', chunking='on', chunk_tokens=100, chunk_overlap=10)
+        self.assertEqual(scan.call_args.kwargs['chunking'], 'on')
+        self.assertEqual(answer['chunking']['chunks'], 4)
+        self.assertFalse(answer['usage']['truncated'])
 
     def test_description_mapping_preserves_delimiters_in_description(self):
         question = options_questions({'A': 'billing, invoices: refunds = payments', 'B': 'other'})
@@ -171,6 +182,13 @@ class ApiTests(unittest.TestCase):
         payload['max_len'] = 0
         self.assertEqual(self.request('POST', '/classify', json.dumps(payload))[0], 400)
         self.model.classify.assert_not_called()
+
+    def test_http_chunk_controls_and_validation(self):
+        payload = {'message': 'message', 'options': ['A', 'B'], 'chunking': 'on', 'chunk_tokens': 100, 'chunk_overlap': 20}
+        self.assertEqual(self.request('POST', '/classify', json.dumps(payload))[0], 200)
+        self.model.classify.assert_called_with('message', ['A', 'B'], chunking='on', chunk_tokens=100, chunk_overlap=20)
+        payload['chunk_overlap'] = 100
+        self.assertEqual(self.request('POST', '/classify', json.dumps(payload))[0], 400)
 
 
 if __name__ == '__main__':
